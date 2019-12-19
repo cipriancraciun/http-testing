@@ -1,0 +1,5 @@
+
+
+class Context (object) :
+	pass
+
