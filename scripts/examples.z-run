@@ -1,0 +1,114 @@
+#!/dev/null
+
+
+::// *
+++::// examples / ...
+++::// examples / execute / ...
+++::// examples / execute + less / ...
+++::// examples / execute + diff-lines / ...
+++::// examples / execute + diff-words / ...
+
+
+
+
+--<< examples / execute
+	test "${#}" -ge 1
+	_example="${1}"
+	_source="./examples/${_example}.py"
+	_output="./examples/_reports/${_example}.cfg"
+	shift -- 1
+	"${ZRUN[@]}" ':: tools / execute' "${_source}" "${_output}" "${@}"
+	exec -- cat -- "${_output}"
+!!
+
+
+--<< examples / execute + less
+	test "${#}" -ge 1
+	_example="${1}"
+	_source="./examples/${_example}.py"
+	_output="./examples/_reports/${_example}.cfg"
+	shift -- 1
+	exec -- "${ZRUN[@]}" ':: tools / execute + less' "${_source}" "${_output}" "${@}"
+!!
+
+--<< examples / execute + diff-lines
+	test "${#}" -ge 1
+	_example="${1}"
+	_source="./examples/${_example}.py"
+	_output="./examples/_reports/${_example}.cfg"
+	shift -- 1
+	exec -- "${ZRUN[@]}" ':: tools / execute + diff-lines' "${_source}" "${_output}" "${@}"
+!!
+
+--<< examples / execute + diff-words
+	test "${#}" -ge 1
+	_example="${1}"
+	_source="./examples/${_example}.py"
+	_output="./examples/_reports/${_example}.cfg"
+	shift -- 1
+	exec -- "${ZRUN[@]}" ':: tools / execute + diff-words' "${_source}" "${_output}" "${@}"
+!!
+
+
+
+
+--<<~~.. examples / list
+	find ./examples/ -type f -name '*.py' -printf '%f\n' \
+	| sed -r -e 's#\.py$##' \
+	| jq -R -s 'split ("\n") | map (select (. != ""))'
+!!
+
+
+
+
+++<<~~ examples / ninja
+	#! {{}}
+	#! <ninja>
+	
+	{{ $_examples := ZRUN ":: examples / list" | json_decode }}
+	{{ $_sources := ZRUN ":: sources / list" | json_decode }}
+	
+	builddir = ./examples/_reports
+	
+	rule execute
+	    command = z-run ':: tools / execute' ${in} ${out}
+	    description = [execute]  ${in}
+	
+	rule touch
+	    command = touch -- ${out}
+	    description = [touch]  ${out}
+	
+	build ./examples/_reports/.sources : touch {{ range $_, $_source := $_sources }} ./sources/{{ $_source }}.py {{ end }}
+	
+	{{ range $_, $_example := $_examples }}
+	build ./examples/_reports/{{ $_example }}.cfg : execute ./examples/{{ $_example }}.py | ./examples/_reports/.sources
+	{{ end }}
+	
+!!
+
+
+
+
+<<== examples / 970dea4688212c2d196b0aa3156e07a3
+	#! {{}}
+	
+	{{ $_examples := ZRUN ":: examples / list" | json_decode }}
+	
+	{{ range $_, $_example := $_examples }}
+	:: examples / execute / {{ $_example }} :: exec -- "${ZRUN[@]}" ':: examples / execute' '{{ $_example }}' "${@}"
+	:: examples / execute + less / {{ $_example }} :: exec -- "${ZRUN[@]}" ':: examples / execute + less' '{{ $_example }}' "${@}"
+	:: examples / execute + diff-lines / {{ $_example }} :: exec -- "${ZRUN[@]}" ':: examples / execute + diff-lines' '{{ $_example }}' "${@}"
+	:: examples / execute + diff-words / {{ $_example }} :: exec -- "${ZRUN[@]}" ':: examples / execute + diff-words' '{{ $_example }}' "${@}"
+	{{ end }}
+	
+	++<< examples / execute / *
+		{{ range $_, $_example := $_examples }}
+		printf -- '[ii]  processing `%s`...\n' '{{ $_example }}' >&2
+		"${ZRUN[@]}" ':: examples / execute' '{{ $_example }}' "${@}" > /dev/null
+		{{ end }}
+	!!
+!!
+
+
+&&__ ../examples
+

@@ -1,0 +1,12 @@
+#!/dev/null
+
+
+--<<~~.. sources / list
+	find ./sources/ -type f -name '*.py' -printf '%f\n' \
+	| sed -r -e 's#\.py$##' \
+	| jq -R -s 'split ("\n") | map (select (. != ""))'
+!!
+
+
+&&__ ../sources
+

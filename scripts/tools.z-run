@@ -1,0 +1,90 @@
+#!/dev/null
+
+
+::// tools / ...
+
+
+
+
+<< tools / execute
+	test "${#}" -ge 2
+	_source="${1}"
+	_output="${2}"
+	shift -- 2
+	test -f "${_source}"
+	python2 -s -S -E -R -O -B -- "${_source}" "${@}" >| "${_output}.tmp"
+	mv -T -- "${_output}.tmp" "${_output}"
+!!
+
+
+
+
+<< tools / execute + less
+	test "${#}" -ge 2
+	_source="${1}"
+	_output="${2}"
+	shift -- 2
+	"${ZRUN[@]}" ':: tools / execute' "${_source}" "${_output}" "${@}"
+	exec -- less -S -- "${_output}"
+!!
+
+<< tools / execute + diff-lines
+	test "${#}" -ge 2
+	_source="${1}"
+	_output="${2}"
+	shift -- 2
+	"${ZRUN[@]}" ':: tools / execute' "${_source}" "${_output}" "${@}"
+	exec -- "${ZRUN[@]}" ':: tools / diff / lines' "${_output}"
+!!
+
+<< tools / execute + diff-words
+	test "${#}" -ge 2
+	_source="${1}"
+	_output="${2}"
+	shift -- 2
+	"${ZRUN[@]}" ':: tools / execute' "${_source}" "${_output}" "${@}"
+	exec -- "${ZRUN[@]}" ':: tools / diff / words' "${_output}"
+!!
+
+
+
+
+<< tools / diff / lines
+	test "${#}" -eq 1
+	_output="${1}"
+	test -f "${_output}"
+	exec -- git diff \
+			--inter-hunk-context=20 \
+			--minimal \
+			--no-prefix \
+			--ignore-cr-at-eol \
+			--ignore-space-at-eol \
+			--ignore-space-change \
+			--ignore-all-space \
+			--ignore-blank-lines \
+			--color-moved=plain \
+			-- \
+			"${_output}" \
+	#
+!!
+
+<< tools / diff / words
+	test "${#}" -eq 1
+	_output="${1}"
+	test -f "${_output}"
+	exec -- git diff \
+			--inter-hunk-context=20 \
+			--minimal \
+			--no-prefix \
+			--ignore-cr-at-eol \
+			--ignore-space-at-eol \
+			--ignore-space-change \
+			--ignore-all-space \
+			--ignore-blank-lines \
+			--word-diff-regex '[a-zA-Z0-9_-]+|.' \
+			--color-moved=plain \
+			-- \
+			"${_output}" \
+	#
+!!
+
