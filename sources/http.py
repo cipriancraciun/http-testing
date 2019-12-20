@@ -390,7 +390,7 @@ class Transaction (object) :
 		self.response = Response (_status_code, _status_version, _status_message, _headers, _body)
 	
 	
-	def _trace (self, _tracer) :
+	def _trace (self, _tracer, _annotations = True) :
 		
 		if self.request is not None :
 			_tracer (0xa21095ed, "* request:")
@@ -404,10 +404,11 @@ class Transaction (object) :
 		else :
 			_tracer (0x1c59088d, "* response: none;")
 		
-		if len (self.annotations._records) > 0 :
-			_tracer (0x08574ba6, "* annotations:")
-			for _record in self.annotations._records :
-				_tracer (0xcb6c9a7b, "-- " + _record.msg, *_record.args)
-		else :
-			_tracer (0x0c31f78c, "* annotations: none;")
+		if _annotations :
+			if len (self.annotations._records) > 0 :
+				_tracer (0x08574ba6, "* annotations:")
+				for _record in self.annotations._records :
+					_tracer (0xcb6c9a7b, "-- " + _record.msg, *_record.args)
+			else :
+				_tracer (0x0c31f78c, "* annotations: none;")
 

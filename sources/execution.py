@@ -14,37 +14,41 @@ class Execution (object) :
 		self._context = _context
 		self._transcript = transcript (self, 0x332ac851)
 		self._transactions = list ()
+		self._debug = None
 	
 	
-	def execute (self, _test) :
+	def execute (self, _test, _debug = None) :
 		self._transcript.trace (0x91657e21, "executing...")
-		self._execute (_test, ())
+		_debug = self._debug if _debug is None else _debug
+		self._execute (_test, (), self._debug)
 		if len (self._transactions) == 0 :
 			self._transcript.info (0xc5327e15, "execution yielded no transactions!")
 		self._transcript.trace (0x310eac5e, "executed;")
 	
 	
-	def _execute (self, _test, _stack) :
+	def _execute (self, _test, _stack, _debug) :
 		if isinstance (_test, tests.Test) :
-			self._execute_test (_test, _stack)
+			self._execute_test (_test, _stack, _debug)
 		elif isinstance (_test, tests.Tests) :
-			self._execute_tests (_test, _stack)
+			self._execute_tests (_test, _stack, _debug)
 		else :
 			raise Exception (0xbe83caa9)
 	
 	
-	def _execute_tests (self, _tests, _stack) :
+	def _execute_tests (self, _tests, _stack, _debug) :
 		_stack = _stack + (_tests.identifier,)
 		_identifier = " -- ".join (_stack)
+		_debug = _tests._debug if _debug is None else _debug
 		self._transcript.debug (0xe605026e, "beginning `%s`...", _identifier)
 		for _test in _tests._tests :
-			self._execute (_test, _stack)
+			self._execute (_test, _stack, _debug)
 		self._transcript.trace (0xd6ef2184, "finished `%s`;", _identifier)
 	
 	
-	def _execute_test (self, _test, _stack) :
+	def _execute_test (self, _test, _stack, _debug) :
 		_stack = _stack + (_test.identifier,)
 		_identifier = " -- ".join (_stack)
+		_debug = _test._debug if _debug is None else _debug
 		self._transcript.info (0xe6c0c539, "executing `%s`...", _identifier)
 		
 		_session = Session ()
@@ -63,6 +67,9 @@ class Execution (object) :
 		if len (_transaction.annotations._records) > 0 :
 			self._transcript.debug (0xbf5f42ac, "annotations:")
 			_transaction.annotations._propagate (self._transcript)
+		
+		if _debug :
+			_transaction._trace (self._transcript.debug, False)
 		
 		self._transcript.trace (0x4b83e138, "executed `%s`;", _identifier)
 	

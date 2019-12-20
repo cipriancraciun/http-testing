@@ -9,10 +9,12 @@ from transcript import *
 
 
 
-def tests (_identifier, _context = None) :
+def tests (_identifier, _context = None, _debug = None) :
 	if _context is None :
 		_context = Context ()
-	return Tests (_context, _identifier)
+	_tests = Tests (_context, _identifier)
+	_tests._debug = _debug
+	return _tests
 
 
 
@@ -24,18 +26,20 @@ class Tests (object) :
 		self._context = _context
 		self.identifier = _identifier
 		self._tests = list ()
+		self._debug = None
 		self.requests = lambda : requests (self._context)
 		self.responses = lambda : responses (self._context)
 	
 	
-	def fork (self, identifier = None) :
+	def fork (self, identifier = None, _debug = None) :
 		if identifier is None :
 			raise Exception (0x1b66486c)
 		_tests = Tests (self._context, identifier)
+		_tests._debug = _debug
 		return self._include (_tests)
 	
 	
-	def new (self, identifier = None, request = None, response = None) :
+	def new (self, identifier = None, request = None, response = None, _debug = None) :
 		if identifier is None :
 			raise Exception (0x20ab8531)
 		if request is None :
@@ -43,6 +47,7 @@ class Tests (object) :
 		if response is None :
 			raise Exception (0xa936c78d)
 		_test = Test (self._context, identifier, request, response)
+		_test._debug = _debug
 		return self._include (_test)
 	
 	
@@ -72,6 +77,7 @@ class Test (object) :
 		self.identifier = _identifier
 		self._request_builder = _request_builder
 		self._response_enforcer = _response_enforcer
+		self._debug = None
 	
 	
 	def execute (self) :
