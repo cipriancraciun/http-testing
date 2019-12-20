@@ -27,7 +27,14 @@ class Tests (object) :
 		self.responses = lambda : responses (self._context)
 	
 	
-	def test (self, identifier = None, request = None, response = None) :
+	def fork (self, identifier = None) :
+		if identifier is None :
+			raise Exception (0x1b66486c)
+		_tests = Tests (self._context, identifier)
+		return self._include (_tests)
+	
+	
+	def new (self, identifier = None, request = None, response = None) :
 		if identifier is None :
 			raise Exception (0x20ab8531)
 		if request is None :
@@ -35,7 +42,7 @@ class Tests (object) :
 		if response is None :
 			raise Exception (0xa936c78d)
 		_test = Test (self._context, identifier, request, response)
-		self._include (_test)
+		return self._include (_test)
 	
 	
 	def _include (self, _test) :
@@ -45,6 +52,7 @@ class Tests (object) :
 			self._tests.append (_test)
 		else :
 			raise Exception ("52348426")
+		return _test
 	
 	
 	def execute (self) :

@@ -79,6 +79,9 @@ class RequestBuilder (object) :
 		_builder._query = _query
 		return _builder
 	
+	def with_header (self, _name, _value) :
+		return self.with_headers ({_name : _value})
+	
 	def with_headers (self, _headers) :
 		_builder = self._fork_perhaps ()
 		if _builder._headers is not None :
