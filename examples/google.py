@@ -16,13 +16,13 @@ _response_200_with_body = _responses.expect_200 () .has_body ()
 
 
 
-_tests.test (
+_tests.new (
 		"www-redirect",
 		_requests.with_host ("google.com") .with_path ("/"),
 		_responses.fork () .redirect_to ("https://www.google.com/"),
 	)
 
-_tests.test (
+_tests.new (
 		"https-get-/",
 		_www_requests.with_path ("/"),
 		_response_200_with_body,
