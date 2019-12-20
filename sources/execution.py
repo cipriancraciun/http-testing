@@ -16,9 +16,9 @@ class Execution (object) :
 	
 	
 	def execute (self, _test) :
-		self._transcript.debug (0x91657e21, "executing...")
+		self._transcript.trace (0x91657e21, "executing...")
 		self._execute (_test, ())
-		self._transcript.debug (0x310eac5e, "executed;")
+		self._transcript.trace (0x310eac5e, "executed;")
 	
 	
 	def _execute (self, _test, _stack) :
@@ -36,7 +36,7 @@ class Execution (object) :
 		self._transcript.debug (0xe605026e, "beginning `%s`...", _identifier)
 		for _test in _tests._tests :
 			self._execute (_test, _stack)
-		self._transcript.debug (0xd6ef2184, "finished `%s`;", _identifier)
+		self._transcript.trace (0xd6ef2184, "finished `%s`;", _identifier)
 	
 	
 	def _execute_test (self, _test, _stack) :
@@ -51,15 +51,13 @@ class Execution (object) :
 		_succeeded = _transaction.enforce ()
 		
 		if _succeeded :
-			self._transcript.debug (0x9541c9ec, "-> succeeded;")
+			self._transcript.debug (0x9541c9ec, "succeeded executing `%s`;", _identifier)
 		else :
-			self._transcript.warning (0x78f26ad5, "-> failed!")
+			self._transcript.error (0x78f26ad5, "failed executing `%s`!", _identifier)
 		
 		if len (_transaction.annotations._records) > 0 :
-			self._transcript.warning (0xadd239d3, "-> annotations:")
 			for _record in _transaction.annotations._records :
-				# self._transcript.trace (0xfe590966, "%r / %r", _record.msg, _record.args)
-				self._transcript.warning (0xa1056f0f, "%s", _record.getMessage ())
+				self._transcript.warning (0xa1056f0f, "-> %s", _record.getMessage ())
 		
-		self._transcript.debug (0x4b83e138, "executed `%s`;", _identifier)
+		self._transcript.trace (0x4b83e138, "executed `%s`;", _identifier)
 

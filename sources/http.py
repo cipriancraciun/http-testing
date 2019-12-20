@@ -169,7 +169,7 @@ class Transaction (object) :
 	
 	
 	def prepare (self) :
-		self._transcript.debug (0xc7e3cdda, "preparing...")
+		self._transcript.trace (0xc7e3cdda, "preparing...")
 		if self._status != "created" :
 			raise Exception (0x1c587c30)
 		self._status = "preparing"
@@ -185,11 +185,11 @@ class Transaction (object) :
 			raise Exception (0x52c05f72)
 		
 		self._status = "prepared"
-		self._transcript.debug (0x40fb50f3, "prepared;")
+		self._transcript.trace (0x40fb50f3, "prepared;")
 	
 	
 	def enforce (self) :
-		self._transcript.debug (0xd787ec43, "enforcing...")
+		self._transcript.trace (0xd787ec43, "enforcing...")
 		if self._status != "executed" :
 			raise Exception (0x30fdb113)
 		self._status = "enforcing"
@@ -211,12 +211,12 @@ class Transaction (object) :
 		self.failed = not self.succeeded
 		
 		self._status = "enforced"
-		self._transcript.debug (0x5ea3bc9e, "enforced;")
+		self._transcript.trace (0x5ea3bc9e, "enforced;")
 		return self.succeeded
 	
 	
 	def execute (self) :
-		self._transcript.debug (0x1e41cf29, "executing...")
+		self._transcript.trace (0x1e41cf29, "executing...")
 		if self._status != "prepared" :
 			raise Exception (0x293086ba)
 		self._status = "executing"
@@ -225,7 +225,7 @@ class Transaction (object) :
 		self._execute_response (_http)
 		_http.close ()
 		self._status = "executed"
-		self._transcript.debug (0x21a65363, "executed;")
+		self._transcript.trace (0x21a65363, "executed;")
 	
 	
 	def _execute_connect (self) :
@@ -301,7 +301,7 @@ class Transaction (object) :
 	
 	def _execute_response (self, _http) :
 		
-		self._transcript.debug (0x9e154782, "receiving response...")
+		self._transcript.trace (0x9e154782, "receiving response...")
 		
 		_response = _http.getresponse ()
 		

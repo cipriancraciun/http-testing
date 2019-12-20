@@ -2,12 +2,17 @@
 
 import logging
 
+
+
+
+_transcript_trace = False
+
 logging.basicConfig (
 		# NOTE:  https://docs.python.org/2/library/logging.html#logrecord-attributes
 		# format = "[%(process)08d][%(levelname)-8s}][%(name)-25s]  %(message)s",
 		format = "%(levelname)8s %(message)s",
 		datefmt = "%Y-%m-%d %H:%M:%S",
-		level = logging.INFO,
+		level = logging.INFO if not _transcript_trace else 0,
 	)
 
 logging.addLevelName (logging.DEBUG / 2, "TRACE")
