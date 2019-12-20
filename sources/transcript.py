@@ -5,14 +5,14 @@ import logging
 
 
 
-_transcript_trace = False
+_transcript_trace = logging.DEBUG
 
 logging.basicConfig (
 		# NOTE:  https://docs.python.org/2/library/logging.html#logrecord-attributes
 		# format = "[%(process)08d][%(levelname)-8s}][%(name)-25s]  %(message)s",
-		format = "%(levelname)8s %(message)s",
+		format = "[%(levelname)-2.2s] %(message)s",
 		datefmt = "%Y-%m-%d %H:%M:%S",
-		level = logging.INFO if not _transcript_trace else 0,
+		level = _transcript_trace,
 	)
 
 logging.addLevelName (logging.DEBUG / 2, "TRACE")
@@ -67,6 +67,23 @@ class Transcript (Tracer) :
 
 
 
+class Dumper (Tracer) :
+	
+	
+	def __init__ (self) :
+		self._logger = logging.getLogger ("{dump}")
+		self._logger.setLevel (0)
+	
+	
+	def _log (self, _level, _code, _arguments_list, _arguments_dict) :
+		_message = _arguments_list[0]
+		_arguments_list = _arguments_list[1:]
+		_prefix = "[%08x]  " % (_code)
+		self._logger.log (_level, _prefix + _message, *_arguments_list, **_arguments_dict)
+
+
+
+
 class Annotations (Tracer) :
 	
 	
@@ -81,6 +98,13 @@ class Annotations (Tracer) :
 		_arguments_list = _arguments_list[1:]
 		_prefix = "[%08x]  " % _code
 		self._logger.log (_level, _prefix + _message, *_arguments_list, **_arguments_dict)
+	
+	def _propagate (self, _tracer) :
+		_arguments_dict = {}
+		for _record in self._records :
+			_arguments_list = [_record.msg]
+			_arguments_list.extend (_record.args)
+			_tracer._log (_record.levelno, 0xd06d66d4, _arguments_list, _arguments_dict)
 
 
 
@@ -104,4 +128,12 @@ def transcript (_owner, _code, _instance = None) :
 
 
 _transcript_instance_permuter = Permuter ()
+
+
+
+
+def dump (_code, *_arguments_list, **_arguments_dict) :
+	_dumper.critical (_code, *_arguments_list, **_arguments_dict)
+
+_dumper = Dumper ()
 

@@ -1,6 +1,7 @@
 
 
 import http # recursive-import
+from transcript import *
 
 
 
@@ -150,7 +151,7 @@ class RequestBuilder (object) :
 						raise Exception (0x0810f669)
 					_target.append ((_name, _value))
 			elif isinstance (_source, dict) :
-				for _name, _value in _source :
+				for _name, _value in _source.iteritems () :
 					_merge (_target, (_name, _value), _without_value_allowed)
 			else :
 				raise Exception (0x1f49dbdc)

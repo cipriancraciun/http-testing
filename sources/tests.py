@@ -4,6 +4,7 @@ from context import *
 from execution import *
 from request_builders import *
 from response_enforcers import *
+from transcript import *
 
 
 
@@ -57,7 +58,8 @@ class Tests (object) :
 	
 	def execute (self) :
 		_execution = Execution (self._context)
-		return _execution.execute (self)
+		_execution.execute (self)
+		return _execution
 
 
 

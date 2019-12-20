@@ -1,5 +1,8 @@
 
 
+from transcript import *
+
+
 
 
 def responses (_context = None) :
@@ -46,6 +49,12 @@ class ResponseEnforcer (object) :
 	def expect_200 (self) :
 		return self.has_status (200)
 	
+	def expect_403 (self) :
+		return self.has_status (403)
+	
+	def expect_502 (self) :
+		return self.has_status (502)
+	
 	def has_status (self, _code) :
 		_builder = self._fork_perhaps ()
 		return _builder.append_enforcer (_builder._enforce_status_code, _code)
@@ -56,10 +65,14 @@ class ResponseEnforcer (object) :
 			if _actual != _expected :
 				_transaction.annotations.error (0x79b1b50d, "status code:  expected `%d`,  received `%d`!", _expected, _actual)
 				return False
+			else :
+				_transaction.annotations.debug (0xbb548cd6, "status code:  matched expected, `%d`;", _actual)
 		elif isinstance (_expected, list) or isinstance (_expected, tuple) or isinstance (_expected, set) :
 			if _actual not in _expected :
-				_transaction.annotations.error (0x79c10e29, "status code:  expected not matched,  received `%d`!", _actual)
+				_transaction.annotations.error (0x79c10e29, "status code:  expected not in set,  received `%d`!", _actual)
 				return False
+			else :
+				_transaction.annotations.debug (0x09058571, "status code:  matched in set, `%d`;", _actual)
 		else :
 			raise Exception (0xadc2b533)
 		return True
@@ -75,19 +88,28 @@ class ResponseEnforcer (object) :
 		_actual = _transaction.response.headers_0.get (_name.lower ())
 		if _expected is None or _expected is False :
 			if _actual is not None :
-				_transaction.annotations.error (0x22844c67, "header `%s`:  expected none, received `%s`!", _name, _actual)
+				_transaction.annotations.error (0x22844c67, "header `%s`:  expected missing, received `%s`!", _name, _actual)
 				return False
+			else :
+				_transaction.annotations.debug (0x1339e80d, "header `%s`:  matched missing;", _name)
 		elif _expected is True :
 			if _actual is None :
-				_transaction.annotations.error (0x41ba0fd5, "header `%s`:  expected, received none!", _name)
+				_transaction.annotations.error (0x41ba0fd5, "header `%s`:  expected present, received none!", _name)
+				return False
+			else :
+				_transaction.annotations.debug (0xcb6a7efc, "header `%s`:  matched present, `%s`;", _name, _actual)
 		elif isinstance (_expected, basestring) :
 			if _actual != _expected :
 				_transaction.annotations.error (0xd1ae5495, "header `%s`:  expected `%s`, received `%s`!", _name, _expected, _actual)
 				return False
+			else :
+				_transaction.annotations.debug (0x47061c22, "header `%s`:  matched expected, `%s`;", _name, _actual)
 		elif isinstance (_expected, list) or isinstance (_expected, tuple) or isinstance (_expected, set) :
 			if _actual not in _expected :
-				_transaction.annotations.error (0x6015606a, "header `%s`:  expected not matched, received `%s`!", _name, _actual)
+				_transaction.annotations.error (0x6015606a, "header `%s`:  expected not in set, received `%s`!", _name, _actual)
 				return False
+			else :
+				_transaction.annotations.debug (0xbcb21053, "header `%s`:  matched in set, `%s`;", _name, _actual)
 		else :
 			raise Exception (0x6ce1d2c3)
 		return True
@@ -104,19 +126,26 @@ class ResponseEnforcer (object) :
 		_actual_len = len (_actual) if _actual is not None else 0
 		if _expected is None or _expected is False :
 			if _actual is not None :
-				_transaction.annotations.error (0x9fe82649, "body:  expected none,  received `%d`!", _actual_len)
+				_transaction.annotations.error (0x9fe82649, "body:  expected missing, received `%d`!", _actual_len)
 				return False
+			else :
+				_transaction.annotations.debug (0x319fd01f, "body:  matched missing;")
 		elif _expected is True :
 			if _actual is None :
-				_transaction.annotations.error (0x78dada70, "body:  expected,  received none!")
+				_transaction.annotations.error (0x78dada70, "body:  expected present, received none!")
 				return False
+			else :
+				_transaction.annotations.debug (0x997fdd5b, "body:  matched present, `%d` bytes;", _actual_len)
 		elif isinstance (_expected, basestring) :
 			if _actual is None or _actual != _expected :
-				_transaction.annotations.error (0x90b47ff2, "body:  expected `%s`, received `%d`!", _expected, _actual_len)
+				_transaction.annotations.error (0x90b47ff2, "body:  expected `%s`, received `%d` bytes!", _expected, _actual_len)
 				return False
+			else :
+				_transaction.annotations.debug (0x79917b5a, "body:  matched expected, `%d` bytes;", _actual_len)
 		else :
 			raise Exception (0xd36ffd83)
 		return True
+	
 	
 	
 	

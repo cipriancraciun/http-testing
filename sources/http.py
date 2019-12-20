@@ -1,10 +1,12 @@
 
 
 import httplib
+import urllib
 
 
 from request_builders import *
 from response_enforcers import *
+from tools import *
 from transcript import *
 
 
@@ -25,62 +27,68 @@ class Request (object) :
 	
 	
 	def _normalize (self) :
-		
-		if self.host == "" : self.host = None
-		if self.method == "" : self.method = None
-		if self.path == "" : self.path = None
-		if self.query == "" : self.query = None
-		if self.body == "" : self.body = None
-		
-		if isinstance (self.headers, dict) and len (self.headers) == 0 : self.headers = None
-		
-		if isinstance (self.path, tuple) or isinstance (self.path, list) :
-			if len (self.query) > 0 :
-				self.path = "/".join (self.path)
+		self._normalize_host ()
+		self._normalize_method ()
+		self._normalize_path ()
+		self._normalize_query ()
+		self._normalize_headers ()
+		self._normalize_body ()
+	
+	def _normalize_host (self) :
+		self.host = normalize_string_lower (self.host)
+	
+	def _normalize_method (self) :
+		self.method = normalize_string_upper (self.method)
+		if self.method is None :
+			self.method = "GET"
+	
+	def _normalize_path (self) :
+		if isinstance (self.path, basestring) :
+			if self.path != "" :
+				self.path = urllib.quote (self.path, "/")
 			else :
-				self.path = None
-			self.path = urllib.quote (self.path, "/")
-		
-		if isinstance (self.query, dict) :
-			if len (self.query) > 0 :
-				self.query = sorted (list (self.query))
-				self.query = [urllib.quote (_name, "") + "=" + urllib.quote (_value, "") for _name, _value in self.query]
+				self.path = "/"
+		else :
+			self.path = flatten_list_or_similar (self.path, normalize_string)
+			if len (self.path) > 0 :
+				self.path = "/" + "/".join (self.path)
+				while True :
+					_path_len = len (self.path)
+					self.path = self.path.replace ("//", "/")
+					if _path_len == len (self.path) :
+						break
+				self.path = urllib.quote (self.path, "/")
+			else :
+				self.path = "/"
+	
+	def _normalize_query (self) :
+		if isinstance (self.query, basestring) :
+			if self.query != "" :
+				self.query = urllib.quote (self.query, "&=")
 			else :
 				self.query = None
-		if isinstance (self.query, tuple) or isinstance (self.query, list) :
+		else :
+			self.query = flatten_multi_map (self.query, normalize_string, None, normalize_string, None)
 			if len (self.query) > 0 :
-				self.query = [urllib.quote (_argument, "=") for _argument in self.query]
+				self.query = sorted (list (self.query))
+				self.query = ["%s=%s" % (urllib.quote (_name, ""), urllib.quote (_value, "")) for _name, _value in self.query]
 				self.query = "&".join (self.query)
 			else :
 				self.query = None
-		
-		if self.method is None : self.method = "GET"
-		if self.path is None : self.path = "/"
-		
-		if self.host is not None and not isinstance (self.host, basestring) :
-			raise Exception (0x3008da80)
-		if self.method is not None and not isinstance (self.method, basestring) :
-			raise Exception (0x9a58b155)
-		if self.path is not None and not isinstance (self.path, basestring) :
-			raise Exception (0x65ea73f8)
-		if self.query is not None and not isinstance (self.query, basestring) :
-			raise Exception (0x5660b2e6)
-		if self.headers is not None and not isinstance (self.headers, dict) :
-			raise Exception (0x83006f62)
-		if self.body is not None and not isinstance (self.body, basestring) :
-			raise Exception (0x90eb3aae)
-		
-		if self.host is not None :
-			self.host = self.host.lower ()
-		self.method = self.method.upper ()
+	
+	def _normalize_headers (self) :
+		self.headers = flatten_multi_map (self.headers, normalize_string, None, normalize_string, None)
+		if len (self.headers) == 0 :
+			self.headers = None
+	
+	def _normalize_body (self) :
+		self.body = normalize_string (self.body)
 	
 	
 	def _set_endpoint (self, _endpoint) :
-		if _endpoint is None :
-			self.server_endpoint = None
-			self.server_tls = False
-		elif isinstance (_endpoint, basestring) :
-			_endpoint = _endpoint.lower ()
+		
+		_endpoint = normalize_string_lower (_endpoint)
+		if _endpoint is not None :
 			if _endpoint.startswith ("http:") :
 				self.server_endpoint = _endpoint[5:]
 				self.server_tls = False
@@ -92,13 +100,48 @@ class Request (object) :
 			if self.server_endpoint == "" :
 				self.server_endpoint = None
 		else :
-			raise Exception (0x3420f3b5)
+			self.server_endpoint = None
+			self.server_tls = False
 		
 		if self.server_endpoint is None and self.host is not None :
 			self.server_endpoint = self.host
 		
 		if self.server_endpoint is None :
 			raise Exception (0x0ffef94e)
+	
+	
+	def _trace (self, _tracer) :
+		
+		if self.host is not None :
+			_tracer (0x7fc84f53, "-- host: `%s`;", self.host)
+		else :
+			_tracer (0xdc8cf7d9, "-- host: none;")
+		
+		if self.method is not None :
+			_tracer (0x2ec04778, "-- method: `%s`;", self.method)
+		else :
+			_tracer (0xf8d40215, "-- method: unknown;")
+		
+		if self.path is not None :
+			_tracer (0xaa0d0b82, "-- path: `%s`;", self.path)
+		else :
+			_tracer (0x402dd426, "-- path: unknown;")
+		
+		if self.query is not None :
+			_tracer (0xb4970e93, "-- query: `%s`;", self.query)
+		else :
+			_tracer (0x763804da, "-- query: none;")
+		
+		if self.headers is not None and len (self.headers) > 0 :
+			for _key, _value in self.headers :
+				_tracer (0xe75a9e5b, "-- header `%s`: `%s`;", _key, _value)
+		else :
+			_tracer (0x4ed6a4ee, "-- headers: none;")
+		
+		if self.body is not None :
+			_tracer (0xbb5141bf, "-- body: `%d` bytes;", len (self.body))
+		else :
+			_tracer (0xa41d4441, "-- body: none;")
 
 
 
@@ -116,27 +159,46 @@ class Response (object) :
 	
 	
 	def _normalize (self) :
-		self.headers_0 = dict ()
-		if self.headers is not None :
-			for _name, _value in self.headers.iteritems () :
-				_name = _name.lower ()
-				if isinstance (_value, basestring) :
-					pass
-				elif isinstance (_value, tuple) or isinstance (_value, list) :
-					_value = list (_value)
-				else :
-					raise Exception (0xc807bdef)
-				if _name not in self.headers_0 :
-					self.headers_0[_name] = _value
-				else :
-					_values = self.headers_0[_name]
-					if isinstance (_values, basestring) :
-						_values = [_values]
-						self.headers_0[_name] = _values
-					if isinstance (_value, basestring) :
-						_values.append (_value)
-					else :
-						_values.extend (_value)
+		
+		self.status_code = normalize_positive_integer (self.status_code)
+		self.status_version = normalize_string (self.status_version)
+		self.status_message = normalize_string (self.status_message)
+		
+		self.headers = flatten_multi_map (self.headers, normalize_string, None, normalize_string, None)
+		if len (self.headers) == 0 :
+			self.headers = None
+		self.headers_0 = multi_map_to_dict (self.headers, normalize_string_lower, None, None, None)
+		
+		self.body = normalize_string (self.body)
+	
+	
+	def _trace (self, _tracer) :
+		
+		if self.status_code is not None :
+			_tracer (0xeaa6ad21, "-- status code: `%d`;", self.status_code)
+		else :
+			_tracer (0x251e03c2, "-- status code: unknown;")
+		
+		if self.status_version is not None :
+			_tracer (0x87ca843d, "-- status version: `%s`;", self.status_version)
+		else :
+			_tracer (0xf2563c0a, "-- status version: unknown;")
+		
+		if self.status_message is not None :
+			_tracer (0x8820e5f1, "-- status message: `%s`;", self.status_message)
+		else :
+			_tracer (0xd3428693, "-- status message: unknown;")
+		
+		if self.headers is not None and len (self.headers) > 0 :
+			for _key, _value in self.headers :
+				_tracer (0x78ba5bbe, "-- header `%s`: `%s`;", _key, _value)
+		else :
+			_tracer (0x0e792726, "-- headers: none;")
+		
+		if self.body is not None :
+			_tracer (0xfea4219c, "-- body: `%d` bytes;", len (self.body))
+		else :
+			_tracer (0xe800f587, "-- body: none;")
 
 
 
@@ -260,17 +322,10 @@ class Transaction (object) :
 		self._transcript.debug (0x6f1063db, "sending request `%s` to `%s`...", self.request.method, _selector)
 		
 		_headers = list ()
-		
 		if self.request.host is not None :
 			_headers.append (("Host", self.request.host))
-		
 		if self.request.headers is not None :
-			for _name, _value in self.request.headers :
-				if isinstance (_value, list) :
-					for _value in _value :
-						_headers.append ((_name, _value))
-				else :
-					_headers.append ((_name, _value))
+			_headers.extend (self.request.headers)
 		
 		if self.request.host is not None :
 			self._transcript.trace (0x02551cf9, "-- host: `%s`;", len (self.request.host))
@@ -320,17 +375,10 @@ class Transaction (object) :
 		self._transcript.trace (0xf1999901, "-- version: `%s`;", _status_version)
 		self._transcript.trace (0xf1999901, "-- message: `%s`;", _status_message)
 		
-		_headers = dict ()
+		_headers = list ()
 		for _name, _value in _response.getheaders () :
 			self._transcript.trace (0x3ed4ed10, "-- header `%s`: `%s`;", _name, _value)
-			if _name not in _headers :
-				_headers[_name] = _value
-			else :
-				_values = _headers[_name]
-				if isinstance (_values, basestring) :
-					_values = [_values]
-					_headers[_name] = _values
-				_values.append (_value)
+			_headers.append ((_name, _value))
 		
 		_body = _response.read ()
 		if len (_body) == 0 :
@@ -340,4 +388,26 @@ class Transaction (object) :
 			self._transcript.trace (0xffe8cfb6, "-- body: `%d`;", len (_body))
 		
 		self.response = Response (_status_code, _status_version, _status_message, _headers, _body)
+	
+	
+	def _trace (self, _tracer) :
+		
+		if self.request is not None :
+			_tracer (0xa21095ed, "* request:")
+			self.request._trace (_tracer)
+		else :
+			_tracer (0xbce1112c, "* request: none;")
+		
+		if self.response is not None :
+			_tracer (0x80d7ba56, "* response:")
+			self.response._trace (_tracer)
+		else :
+			_tracer (0x1c59088d, "* response: none;")
+		
+		if len (self.annotations._records) > 0 :
+			_tracer (0x08574ba6, "* annotations:")
+			for _record in self.annotations._records :
+				_tracer (0xcb6c9a7b, "-- " + _record.msg, *_record.args)
+		else :
+			_tracer (0x0c31f78c, "* annotations: none;")
 
