@@ -17,10 +17,22 @@ class ResponseEnforcer (object) :
 		self._context = _context
 		self._parent = _parent
 		self._enforcers = list ()
+		self._forking = False
 	
 	
 	def fork (self) :
 		return ResponseEnforcer (self._context, self)
+	
+	def forker (self) :
+		_builder = self.fork ()
+		_builder._forking = True
+		return _builder
+	
+	def _fork_perhaps (self) :
+		if self._forking :
+			return self.fork ()
+		else :
+			return self
 	
 	
 	
@@ -35,7 +47,8 @@ class ResponseEnforcer (object) :
 		return self.has_status (200)
 	
 	def has_status (self, _code) :
-		return self.append_enforcer (self._enforce_status_code, _code)
+		_builder = self._fork_perhaps ()
+		return _builder.append_enforcer (_builder._enforce_status_code, _code)
 	
 	def _enforce_status_code (self, _transaction, _expected) :
 		_actual = _transaction.response.status_code
@@ -55,7 +68,8 @@ class ResponseEnforcer (object) :
 	
 	
 	def has_header (self, _name, _value = True) :
-		return self.append_enforcer (self._enforce_header, _name, _value)
+		_builder = self._fork_perhaps ()
+		return _builder.append_enforcer (_builder._enforce_header, _name, _value)
 	
 	def _enforce_header (self, _transaction, _name, _expected) :
 		_actual = _transaction.response.headers_0.get (_name.lower ())
@@ -82,7 +96,8 @@ class ResponseEnforcer (object) :
 	
 	
 	def has_body (self, _expected = True) :
-		return self.append_enforcer (self._enforce_body, _expected)
+		_builder = self._fork_perhaps ()
+		return _builder.append_enforcer (_builder._enforce_body, _expected)
 	
 	def _enforce_body (self, _transaction, _expected) :
 		_actual = _transaction.response.body
@@ -106,9 +121,10 @@ class ResponseEnforcer (object) :
 	
 	
 	def append_enforcer (self, _callback, *_arguments_list, **_arguments_dict) :
+		_builder = self._fork_perhaps ()
 		_enforcer = lambda _transaction : _callback (_transaction, *_arguments_list, **_arguments_dict)
-		self._enforcers.append (_enforcer)
-		return self
+		_builder._enforcers.append (_enforcer)
+		return _builder
 	
 	
 	

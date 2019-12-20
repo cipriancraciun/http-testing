@@ -6,12 +6,12 @@ import httt
 _tests = httt.tests ("main")
 
 
-_requests = _tests.requests () .with_endpoint ("https:www.google.com:443")
-_www_requests = _requests.with_host ("www.google.com")
+_requests = _tests.requests () .with_endpoint ("https:www.google.com:443") .forker ()
+_www_requests = _requests.with_host ("www.google.com") .forker ()
 
 
-_responses = _tests.responses ()
-_response_200_with_body = _responses.fork () .expect_200 () .has_body ()
+_responses = _tests.responses () .forker ()
+_response_200_with_body = _responses.expect_200 () .has_body ()
 
 
 

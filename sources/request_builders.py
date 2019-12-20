@@ -26,51 +26,63 @@ class RequestBuilder (object) :
 		self._query = None
 		self._headers = None
 		self._body = None
+		self._forking = False
 	
 	
 	def fork (self) :
 		return RequestBuilder (self._context, self)
 	
+	def forker (self) :
+		_builder = self.fork ()
+		_builder._forking = True
+		return _builder
+	
+	def _fork_perhaps (self) :
+		if self._forking :
+			return self.fork ()
+		else :
+			return self
+	
 	
 	def with_endpoint (self, _endpoint) :
-		if self._endpoint is not None :
+		_builder = self._fork_perhaps ()
+		if _builder._endpoint is not None :
 			raise Exception (0xf11cb2b1)
-		_builder = self.fork ()
 		_builder._endpoint = _endpoint
 		return _builder
 	
 	def with_host (self, _host) :
-		if self._host is not None :
+		_builder = self._fork_perhaps ()
+		if _builder._host is not None :
 			raise Exception (0x13c5e1c8)
-		_builder = self.fork ()
 		_builder._host = _host
 		return _builder
 	
 	def with_method (self, _method) :
-		if self._method is not None :
+		_builder = self._fork_perhaps ()
+		if _builder._method is not None :
 			raise Exception (0x7c78c34e)
-		_builder = self.fork ()
 		_builder._method = _method
 		return _builder
 	
 	def with_path (self, _path) :
-		if self._path is not None :
-			_path = (self._path, _path)
-		_builder = self.fork ()
+		_builder = self._fork_perhaps ()
+		if _builder._path is not None :
+			_path = [_builder._path, _path]
 		_builder._path = _path
 		return _builder
 	
 	def with_query (self, **_query) :
-		if self._query is not None :
-			_query = (self._query, _query)
-		_builder = self.fork ()
+		_builder = self._fork_perhaps ()
+		if _builder._query is not None :
+			_query = [_builder._query, _query]
 		_builder._query = _query
 		return _builder
 	
 	def with_headers (self, _headers) :
-		if self._headers is not None :
-			_headers = (self._headers, _headers)
-		_builder = self.fork ()
+		_builder = self._fork_perhaps ()
+		if _builder._headers is not None :
+			_headers = [_builder._headers, _headers]
 		_builder._headers = _headers
 		return _builder
 	
