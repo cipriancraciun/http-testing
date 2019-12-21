@@ -1,6 +1,7 @@
 
 
 import httplib
+import ssl
 import urllib
 
 
@@ -295,10 +296,12 @@ class Transaction (object) :
 		self._transcript.debug (0x95adb4dd, "connecting to `%s` with TLS `%s`...", self.request.server_endpoint, self.request.server_tls)
 		
 		if self.request.server_tls :
+			_ssl = ssl._create_unverified_context ()
 			_http = httplib.HTTPSConnection (
 					host = self.request.server_endpoint,
 					strict = True,
 					timeout = 6,
+					context = _ssl,
 				)
 		else :
 			_http = httplib.HTTPConnection (
