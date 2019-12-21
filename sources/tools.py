@@ -69,12 +69,12 @@ def enforce_type (_value, _type, _allow_none) :
 
 def flatten_list (_value, _normalizer = None, _enforcer = None) :
 	_accumulator = []
-	flatten_list_0 (_accumulator, _value, False, False, False)
+	flatten_list_0 (_accumulator, _value, False, False, False, _normalizer, _enforcer)
 	return _accumulator
 
 def flatten_list_or_similar (_value, _normalizer = None, _enforcer = None) :
 	_accumulator = []
-	flatten_list_0 (_accumulator, _value, True, True, True)
+	flatten_list_0 (_accumulator, _value, True, True, True, _normalizer, _enforcer)
 	return _accumulator
 
 
