@@ -27,6 +27,7 @@ class RequestBuilder (object) :
 		self._query = None
 		self._headers = None
 		self._body = None
+		self._extends = []
 		self._forking = False
 	
 	
@@ -120,7 +121,84 @@ class RequestBuilder (object) :
 		return _builder
 	
 	
+	
+	
+	def extend (self, _builder) :
+		_builder_0 = _builder._fork_perhaps ()
+		_builder = self._fork_perhaps ()
+		_builder._extends.append (_builder_0)
+		return _builder
+	
+	
+	
+	
 	def build (self, _transaction) :
+		
+		_endpoint, _host, _method, _path, _query, _headers, _body = self._build_with_extends ()
+		
+		if len (_query) == 0 :
+			_query = None
+		if len (_headers) == 0 :
+			_headers = None
+		
+		_request = http.Request (_endpoint, _host, _method, _path, _query, _headers, _body)
+		
+		return _request
+	
+	
+	def _build_with_extends (self) :
+		
+		_endpoint, _host, _method, _path, _query, _headers, _body = self._build_without_extends ()
+		
+		_builder = self
+		while _builder is not None :
+			
+			for _builder_0 in _builder._extends :
+				
+				_endpoint_0, _host_0, _method_0, _path_0, _query_0, _headers_0, _body_0 = _builder_0._build_with_extends ()
+				
+				if _endpoint_0 is not None :
+					if _endpoint is None :
+						_endpoint = _endpoint_0
+					else :
+						raise Exception (0x3ac04f81)
+				
+				if _host_0 is not None :
+					if _host is None :
+						_host = _host_0
+					else :
+						raise Exception (0xc30d7933)
+				
+				if _method_0 is not None :
+					if _method is None :
+						_method = _method_0
+					else :
+						raise Exception (0xdb3d5120)
+				
+				if _path_0 is not None :
+					if _path is None :
+						_path = _path_0
+					else :
+						raise Exception (0x7a12b45c)
+				
+				if _query_0 is not None :
+					_query.extend (_query_0)
+				
+				if _headers_0 is not None :
+					_headers.extend (_headers_0)
+				
+				if _body_0 is not None :
+					if _body is None :
+						_body = _body_0
+					else :
+						raise Exception (0x76068c57)
+			
+			_builder = _builder._parent
+		
+		return _endpoint, _host, _method, _path, _query, _headers, _body
+	
+	
+	def _build_without_extends (self) :
 		
 		_endpoint = None
 		_host = None
@@ -179,12 +257,5 @@ class RequestBuilder (object) :
 			
 			_builder = _builder._parent
 		
-		if len (_query) == 0 :
-			_query = None
-		if len (_headers) == 0 :
-			_headers = None
-		
-		_request = http.Request (_endpoint, _host, _method, _path, _query, _headers, _body)
-		
-		return _request
+		return _endpoint, _host, _method, _path, _query, _headers, _body
 

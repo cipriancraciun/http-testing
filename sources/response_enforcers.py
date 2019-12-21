@@ -20,6 +20,7 @@ class ResponseEnforcer (object) :
 		self._context = _context
 		self._parent = _parent
 		self._enforcers = list ()
+		self._extends = list ()
 		self._forking = False
 	
 	
@@ -27,9 +28,9 @@ class ResponseEnforcer (object) :
 		return ResponseEnforcer (self._context, self)
 	
 	def forker (self) :
-		_builder = self.fork ()
-		_builder._forking = True
-		return _builder
+		_enforcer = self.fork ()
+		_enforcer._forking = True
+		return _enforcer
 	
 	def _fork_perhaps (self) :
 		if self._forking :
@@ -56,8 +57,8 @@ class ResponseEnforcer (object) :
 		return self.has_status (502)
 	
 	def has_status (self, _code) :
-		_builder = self._fork_perhaps ()
-		return _builder.append_enforcer (_builder._enforce_status_code, _code)
+		_enforcer = self._fork_perhaps ()
+		return _enforcer.append_enforcer (_enforcer._enforce_status_code, _code)
 	
 	def _enforce_status_code (self, _transaction, _expected) :
 		_actual = _transaction.response.status_code
@@ -80,12 +81,14 @@ class ResponseEnforcer (object) :
 	
 	
 	
-	def has_header (self, _name, _value = True) :
-		_builder = self._fork_perhaps ()
-		return _builder.append_enforcer (_builder._enforce_header, _name, _value)
+	def has_header (self, _name, _value = True, _lower = False) :
+		_enforcer = self._fork_perhaps ()
+		return _enforcer.append_enforcer (_enforcer._enforce_header, _name, _value, _lower)
 	
-	def _enforce_header (self, _transaction, _name, _expected) :
+	def _enforce_header (self, _transaction, _name, _expected, _lower) :
 		_actual = _transaction.response.headers_0.get (_name.lower ())
+		if _actual is not None and _lower :
+			_actual = _actual.lower ()
 		if _expected is None or _expected is False :
 			if _actual is not None :
 				_transaction.annotations.error (0x22844c67, "header `%s`:  expected missing, received `%s`!", _name, _actual)
@@ -99,13 +102,19 @@ class ResponseEnforcer (object) :
 			else :
 				_transaction.annotations.debug (0xcb6a7efc, "header `%s`:  matched present, `%s`;", _name, _actual)
 		elif isinstance (_expected, basestring) :
-			if _actual != _expected :
+			if _actual is None :
+				_transaction.annotations.error (0x6a5c7a4f, "header `%s`:  expected `%s`, received none!", _name, _expected)
+				return False
+			elif _actual != _expected :
 				_transaction.annotations.error (0xd1ae5495, "header `%s`:  expected `%s`, received `%s`!", _name, _expected, _actual)
 				return False
 			else :
 				_transaction.annotations.debug (0x47061c22, "header `%s`:  matched expected, `%s`;", _name, _actual)
 		elif isinstance (_expected, list) or isinstance (_expected, tuple) or isinstance (_expected, set) :
-			if _actual not in _expected :
+			if _actual is None :
+				_transaction.annotations.error (0x1d0875b2, "header `%s`:  expected not in set, received none!", _name)
+				return False
+			elif _actual not in _expected :
 				_transaction.annotations.error (0x6015606a, "header `%s`:  expected not in set, received `%s`!", _name, _actual)
 				return False
 			else :
@@ -118,8 +127,8 @@ class ResponseEnforcer (object) :
 	
 	
 	def has_body (self, _expected = True) :
-		_builder = self._fork_perhaps ()
-		return _builder.append_enforcer (_builder._enforce_body, _expected)
+		_enforcer = self._fork_perhaps ()
+		return _enforcer.append_enforcer (_enforcer._enforce_body, _expected)
 	
 	def _enforce_body (self, _transaction, _expected) :
 		_actual = _transaction.response.body
@@ -149,22 +158,38 @@ class ResponseEnforcer (object) :
 	
 	
 	
+	def extend (self, _enforcer) :
+		_enforcer_0 = _enforcer._fork_perhaps ()
+		_enforcer = self._fork_perhaps ()
+		_enforcer._extends.append (_enforcer_0)
+		return _enforcer
+	
+	
+	
+	
 	def append_enforcer (self, _callback, *_arguments_list, **_arguments_dict) :
-		_builder = self._fork_perhaps ()
-		_enforcer = lambda _transaction : _callback (_transaction, *_arguments_list, **_arguments_dict)
-		_builder._enforcers.append (_enforcer)
-		return _builder
+		_enforcer_0 = lambda _transaction : _callback (_transaction, *_arguments_list, **_arguments_dict)
+		_enforcer = self._fork_perhaps ()
+		_enforcer._enforcers.append (_enforcer_0)
+		return _enforcer
 	
 	
 	
 	
 	def enforce (self, _transaction) :
+		
 		if self._parent is not None :
 			_outcome = self._parent.enforce (_transaction)
 			if _outcome is not None and _outcome is not True :
 				return _outcome
+		
 		for _enforcer in self._enforcers :
 			_outcome = _enforcer (_transaction)
+			if _outcome is not None and _outcome is not True :
+				return _outcome
+		
+		for _enforcer in self._extends :
+			_outcome = _enforcer.enforce (_transaction)
 			if _outcome is not None and _outcome is not True :
 				return _outcome
 
