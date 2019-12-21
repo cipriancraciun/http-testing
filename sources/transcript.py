@@ -7,6 +7,7 @@ import logging
 
 _transcript_trace = logging.INFO
 # _transcript_trace = logging.DEBUG
+# _transcript_trace = 0
 
 logging.basicConfig (
 		# NOTE:  https://docs.python.org/2/library/logging.html#logrecord-attributes
