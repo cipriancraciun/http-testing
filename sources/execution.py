@@ -52,7 +52,7 @@ class Execution (object) :
 		self._transcript.info (0xe6c0c539, "executing `%s`...", _identifier)
 		
 		_session = Session ()
-		_transaction = Transaction (self._context, _session, _test._request_builder, _test._response_enforcer)
+		_transaction = Transaction (self._context, _session, _test.requests, _test.responses)
 		_transaction.prepare ()
 		_transaction.execute ()
 		_succeeded = _transaction.enforce ()

@@ -12,42 +12,71 @@ from transcript import *
 def tests (_identifier, _context = None, _debug = None) :
 	if _context is None :
 		_context = Context ()
-	_tests = Tests (_context, _identifier)
-	_tests._debug = _debug
+	_tests = Tests (_context, _identifier, None, None, _debug)
 	return _tests
 
 
 
 
-class Tests (object) :
+class TestBase (object) :
 	
 	
-	def __init__ (self, _context, _identifier) :
+	def __init__ (self, _context, _identifier, _request_builder, _response_enforcer, _debug) :
+		
+		if _identifier is None :
+			raise Exception (0x1b66486c)
+		
 		self._context = _context
 		self.identifier = _identifier
+		
+		if _request_builder is None :
+			_request_builder = requests (self._context)
+		elif isinstance (_request_builder, RequestBuilder) :
+			pass
+		else :
+			raise Exception (0x6b349655)
+		
+		if _response_enforcer is None :
+			_response_enforcer = responses (self._context)
+		elif isinstance (_response_enforcer, ResponseEnforcer) :
+			pass
+		else :
+			raise Exception (0x19f0bb59)
+		
+		self.requests_shared = _request_builder
+		self.responses_shared = _response_enforcer
+		
+		self.requests = self.requests_shared.forker ()
+		self.responses = self.responses_shared.forker ()
+		
+		self._debug = _debug
+	
+	
+	def execute (self) :
+		_execution = Execution (self._context)
+		_execution.execute (self)
+		return _execution
+
+
+
+
+class Tests (TestBase) :
+	
+	
+	def __init__ (self, _context, _identifier, _request_builder, _response_enforcer, _debug) :
+		TestBase.__init__ (self, _context, _identifier, _request_builder, _response_enforcer, _debug)
 		self._tests = list ()
-		self._debug = None
-		self.requests = lambda : requests (self._context)
-		self.responses = lambda : responses (self._context)
 	
 	
 	def fork (self, identifier = None, _debug = None) :
-		if identifier is None :
-			raise Exception (0x1b66486c)
-		_tests = Tests (self._context, identifier)
-		_tests._debug = _debug
+		_tests = Tests (self._context, identifier, self.requests_shared.fork (), self.responses_shared.fork (), _debug)
 		return self._include (_tests)
 	
 	
 	def new (self, identifier = None, request = None, response = None, _debug = None) :
 		if identifier is None :
 			raise Exception (0x20ab8531)
-		if request is None :
-			raise Exception (0x7cadd0ce)
-		if response is None :
-			raise Exception (0xa936c78d)
-		_test = Test (self._context, identifier, request, response)
-		_test._debug = _debug
+		_test = Test (self._context, identifier, request, response, _debug)
 		return self._include (_test)
 	
 	
@@ -59,30 +88,15 @@ class Tests (object) :
 		else :
 			raise Exception ("52348426")
 		return _test
-	
-	
-	def execute (self) :
-		_execution = Execution (self._context)
-		_execution.execute (self)
-		return _execution
 
 
 
 
-class Test (object) :
+class Test (TestBase) :
 	
 	
-	def __init__ (self, _context, _identifier, _request_builder, _response_enforcer) :
-		self._context = _context
-		self.identifier = _identifier
-		self._request_builder = _request_builder
-		self._response_enforcer = _response_enforcer
-		self._debug = None
-	
-	
-	def execute (self) :
-		_execution = Execution (self._context)
-		return _execution.execute (self)
+	def __init__ (self, _context, _identifier, _request_builder, _response_enforcer, _debug) :
+		TestBase.__init__ (self, _context, _identifier, _request_builder, _response_enforcer, _debug)
 
 
 
