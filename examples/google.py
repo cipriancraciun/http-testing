@@ -3,32 +3,22 @@
 import httt
 
 
-_tests = httt.tests ("main")
-
-
-_requests = _tests.requests () .with_endpoint ("https:www.google.com:443") .forker ()
-_www_requests = _requests.with_host ("www.google.com") .forker ()
-
-
-_responses = _tests.responses () .forker ()
-_response_200_with_body = _responses.expect_200 () .has_body ()
-
-
+_tests = httt.tests ("google")
+_tests.requests_shared.with_endpoint ("https:www3.l.google.com:443")
+_tests.responses_shared.has_header ("server", "gws") .has_header ("date") .has_header ("alt-svc")
 
 
 _tests.new (
-		"www-redirect",
-		_requests.with_host ("google.com") .with_path ("/"),
-		_responses.fork () .redirect_to ("https://www.google.com/"),
+		"apex-to-www-redirect",
+		_tests.requests.with_host ("google.com"),
+		_tests.responses.redirect_to ("https://www.google.com/"),
 	)
 
 _tests.new (
-		"https-get-/",
-		_www_requests.with_path ("/"),
-		_response_200_with_body,
+		"www-get-/",
+		_tests.requests.with_host ("www.google.com"),
+		_tests.responses.expect_200 () .has_body (),
 	)
-
-
 
 
 _tests.execute ()
