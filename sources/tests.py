@@ -9,10 +9,10 @@ from transcript import *
 
 
 
-def tests (_identifier, _context = None, _debug = None) :
+def tests (_identifier, _context = None, requests = None, responses = None, debug = None) :
 	if _context is None :
 		_context = Context ()
-	_tests = Tests (_context, _identifier, None, None, _debug)
+	_tests = Tests (_context, _identifier, None, None, debug)
 	return _tests
 
 
@@ -56,6 +56,19 @@ class TestBase (object) :
 		_execution = Execution (self._context)
 		_execution.execute (self)
 		return _execution
+	
+	
+	def _perhaps_requests (self, _requests) :
+		if _requests is not None :
+			return _requests
+		else :
+			return self.requests.fork ()
+	
+	def _perhaps_responses (self, _responses) :
+		if _responses is not None :
+			return _responses
+		else :
+			return self.responses.fork ()
 
 
 
@@ -68,15 +81,17 @@ class Tests (TestBase) :
 		self._tests = list ()
 	
 	
-	def fork (self, identifier = None, _debug = None) :
-		_tests = Tests (self._context, identifier, self.requests_shared.fork (), self.responses_shared.fork (), _debug)
+	def fork (self, identifier = None, requests = None, responses = None, debug = None) :
+		_request_builder = self._perhaps_requests (requests)
+		_response_enforcer = self._perhaps_responses (responses)
+		_tests = Tests (self._context, identifier, _request_builder, _response_enforcer, debug)
 		return self._include (_tests)
 	
 	
-	def new (self, identifier = None, request = None, response = None, _debug = None) :
-		if identifier is None :
-			raise Exception (0x20ab8531)
-		_test = Test (self._context, identifier, request, response, _debug)
+	def new (self, identifier = None, requests = None, responses = None, debug = None) :
+		_request_builder = self._perhaps_requests (requests)
+		_response_enforcer = self._perhaps_responses (responses)
+		_test = Test (self._context, identifier, _request_builder, _response_enforcer, debug)
 		return self._include (_test)
 	
 	
