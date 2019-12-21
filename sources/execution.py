@@ -68,7 +68,9 @@ class Execution (object) :
 			self._transcript.debug (0xbf5f42ac, "annotations:")
 			_transaction.annotations._propagate (self._transcript)
 		
-		if _debug :
+		if not _succeeded :
+			_transaction._trace (self._transcript.info, False)
+		elif _debug :
 			_transaction._trace (self._transcript.debug, False)
 		
 		self._transcript.trace (0x4b83e138, "executed `%s`;", _identifier)

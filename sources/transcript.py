@@ -5,12 +5,13 @@ import logging
 
 
 
-_transcript_trace = logging.DEBUG
+_transcript_trace = logging.INFO
+# _transcript_trace = logging.DEBUG
 
 logging.basicConfig (
 		# NOTE:  https://docs.python.org/2/library/logging.html#logrecord-attributes
 		# format = "[%(process)08d][%(levelname)-8s}][%(name)-25s]  %(message)s",
-		format = "[%(levelname)-2.2s] %(message)s",
+		format = "[%(levelname)-4.4s] %(message)s",
 		datefmt = "%Y-%m-%d %H:%M:%S",
 		level = _transcript_trace,
 	)
