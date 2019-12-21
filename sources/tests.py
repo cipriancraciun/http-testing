@@ -59,16 +59,24 @@ class TestBase (object) :
 	
 	
 	def _perhaps_requests (self, _requests) :
-		if _requests is not None :
+		if isinstance (_requests, RequestBuilder) :
 			return _requests
-		else :
+		elif isinstance (_requests, Chainer) :
+			return _chainer_apply (_requests, self.requests.fork ())
+		elif _requests is None :
 			return self.requests.fork ()
+		else :
+			raise Exception (0x4eb43ff0)
 	
 	def _perhaps_responses (self, _responses) :
-		if _responses is not None :
+		if isinstance (_responses, ResponseEnforcer) :
 			return _responses
-		else :
+		elif isinstance (_responses, Chainer) :
+			return _chainer_apply (_responses, self.responses.fork ())
+		elif _responses is None :
 			return self.responses.fork ()
+		else :
+			raise Exception (0xf88b4f0d)
 
 
 
@@ -112,6 +120,59 @@ class Test (TestBase) :
 	
 	def __init__ (self, _context, _identifier, _request_builder, _response_enforcer, _debug) :
 		TestBase.__init__ (self, _context, _identifier, _request_builder, _response_enforcer, _debug)
+
+
+
+
+class Chainer (object) :
+	
+	
+	def __init__ (self, _callbacks) :
+		self._callbacks = _callbacks
+	
+	
+	def __getattribute__ (self, _name) :
+		
+		_chainer = self
+		_callbacks = object.__getattribute__ (_chainer, "_callbacks")
+		
+		if _callbacks is None or _name == "new" :
+			if _callbacks is not None :
+				_callbacks = list (_callbacks)
+			else :
+				_callbacks = list ()
+			_chainer = Chainer (_callbacks)
+		
+		def _callback (*_arguments_list, **_arguments_dict) :
+			
+			if _name == "new" :
+				
+				if len (_arguments_list) > 0 :
+					raise Exception (0x0cfe9b27)
+				if len (_arguments_dict) > 0 :
+					raise Exception (0xdd1a0531)
+				
+			else :
+				_callbacks.append ((_name, _arguments_list, _arguments_dict))
+			
+			return _chainer
+		
+		return _callback
+
+
+chain = Chainer (None)
+
+
+def _chainer_apply (_chainer, _self) :
+	
+	_callbacks = object.__getattribute__ (_chainer, "_callbacks")
+	
+	if _callbacks is not None :
+		for _name, _arguments_list, _arguments_dict in _callbacks :
+			_callback = getattr (_self, _name)
+			_self = _callback (*_arguments_list, **_arguments_dict)
+	
+	return _self
 
 
 
