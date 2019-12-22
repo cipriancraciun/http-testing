@@ -43,11 +43,11 @@ class TestBase (object) :
 		else :
 			raise Exception (0x19f0bb59)
 		
-		self.requests_shared = _request_builder
-		self.responses_shared = _response_enforcer
+		self._requests_0 = _request_builder
+		self._responses_0 = _response_enforcer
 		
-		self.requests = self.requests_shared.forker ()
-		self.responses = self.responses_shared.forker ()
+		self.requests = self._requests_0.forker ()
+		self.responses = self._responses_0.forker ()
 		
 		self._debug = _debug
 	
