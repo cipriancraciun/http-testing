@@ -406,7 +406,8 @@ class Transaction (object) :
 				_tracer (0x08574ba6, "* annotations:")
 				_tracer_annotations = _tracer.fork ()
 				for _record in self.annotations._records :
-					_tracer_annotations (0xcb6c9a7b, "-- " + _record.msg, *_record.args)
+					_prefix = "-- [%-4.4s] " % (_record.levelname,)
+					_tracer_annotations (0xcb6c9a7b, _prefix + _record.msg, *_record.args)
 			else :
 				_tracer (0x0c31f78c, "* annotations: none;")
 

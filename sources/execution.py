@@ -75,7 +75,7 @@ class Execution (object) :
 		_transaction.execute ()
 		_succeeded = _transaction.enforce ()
 		
-		self._transactions.append ((_handle, _identifier, _transaction))
+		self._transactions.append ((_handle, _identifier, _transaction, _succeeded))
 		self._transactions_by_handle[_handle] = _transaction
 		
 		if _succeeded :
@@ -104,15 +104,23 @@ class Execution (object) :
 	
 	def _trace (self, _tracer) :
 		if len (self._transactions) > 0 :
-			for _identifier, _handle, _transaction in sorted (self._transactions) :
+			for _identifier, _handle, _transaction, _succeeded in sorted (self._transactions) :
 				_tracer.cut ()
+				if not _succeeded :
+					_tracer (0xb86f3e97, "!!!! FAILED !!!!")
 				_tracer (0xc0a5f644, "* transaction:")
 				_tracer_meta = _tracer.fork ()
 				_tracer_meta (0x67181c6a, "* meta:")
 				_tracer_meta.indent ()
+				if _succeeded :
+					_tracer_meta (0x3191db36, "-- outcome: succeeded;")
+				else :
+					_tracer_meta (0x2264995e, "-- outcome: failed;")
 				_tracer_meta (0x2d836357, "-- identifier: `%s`;", _identifier)
 				_tracer_meta (0xdb41b7d9, "-- handle: `%s`;", _handle)
-				_transaction._trace (_tracer.fork ())
+				_transaction._trace (_tracer.fork (), True)
+				if not _succeeded :
+					_tracer (0x14aaf57d, "!!!! FAILED !!!!")
 				_tracer.cut ()
 		else :
 			_tracer (0x1cd6ab66, "* transactions: none;")
