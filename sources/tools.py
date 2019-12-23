@@ -2,6 +2,36 @@
 
 
 
+def enforce_identifier (_identifier) :
+	if isinstance (_identifier, basestring) :
+		pass
+	elif isinstance (_identifier, int) :
+		pass
+	elif isinstance (_identifier, tuple) :
+		if len (_identifier) == 0 :
+			raise Exception (0x5be9d3f8)
+		else :
+			_identifier = tuple ([enforce_identifier (_identifier) for _identifier in _identifier])
+	else :
+		raise Exception (0x17ef4607)
+	return _identifier
+
+
+def stringify_identifier (_identifier) :
+	if isinstance (_identifier, basestring) :
+		pass
+	elif isinstance (_identifier, int) :
+		_identifier = str (_identifier)
+	elif isinstance (_identifier, tuple) :
+		_identifier = [stringify_identifier (_identifier) for _identifier in _identifier if _identifier is not None and _identifier != ()]
+		_identifier = " -- ".join (_identifier)
+	else :
+		raise Exception (0x38729982)
+	return _identifier
+
+
+
+
 def normalize_string (_value) :
 	
 	if _value is None :

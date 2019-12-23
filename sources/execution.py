@@ -1,5 +1,6 @@
 
 
+from crypto import *
 from http import *
 import tests # recursive-import
 from transcript import *
@@ -15,6 +16,7 @@ class Execution (object) :
 		self._transcript = transcript (self, 0x332ac851)
 		self._transport = Transport (self._context)
 		self._transactions = list ()
+		self._transactions_by_fingerprint = dict ()
 		self._debug = None
 	
 	
@@ -39,21 +41,32 @@ class Execution (object) :
 	
 	
 	def _execute_tests (self, _tests, _stack, _debug) :
-		_stack = _stack + (_tests.identifier,)
-		_identifier = " -- ".join (_stack)
+		
+		_stack = (_stack, _tests.identifier)
+		_identifier = stringify_identifier (_stack)
+		_fingerprint = fingerprint (_stack)
+		
 		_debug = _tests._debug if _debug is None else _debug
-		self._transcript.debug (0xe605026e, "beginning `%s`...", _identifier)
+		self._transcript.debug (0xe605026e, "beginning [%s] `%s`...", _fingerprint, _identifier)
+		
 		for _test in _tests._tests :
 			self._execute (_test, _stack, _debug)
-		self._transcript.trace (0xd6ef2184, "finished `%s`;", _identifier)
+		
+		self._transcript.trace (0xd6ef2184, "finished [%s];", _fingerprint)
 	
 	
 	def _execute_test (self, _test, _stack, _debug) :
-		_stack = _stack + (_test.identifier,)
-		_identifier = " -- ".join (_stack)
+		
+		_stack = (_stack, _test.identifier)
+		_identifier = stringify_identifier (_stack)
+		_fingerprint = fingerprint (_stack)
+		
+		if _fingerprint in self._transactions_by_fingerprint :
+			raise Exception (0x98457669)
+		
 		_debug = _test._debug if _debug is None else _debug
 		self._transcript.cut ()
-		self._transcript.info (0xe6c0c539, "executing `%s`...", _identifier)
+		self._transcript.info (0xe6c0c539, "executing [%s] `%s`...", _fingerprint, _identifier)
 		
 		_session = Session ()
 		_transaction = Transaction (self._context, self._transport, _session, _test.requests, _test.responses)
@@ -62,11 +75,12 @@ class Execution (object) :
 		_succeeded = _transaction.enforce ()
 		
 		self._transactions.append (_transaction)
+		self._transactions_by_fingerprint[_fingerprint] = _transaction
 		
 		if _succeeded :
-			self._transcript.debug (0x9541c9ec, "succeeded executing `%s`;", _identifier)
+			self._transcript.debug (0x9541c9ec, "succeeded executing [%s];", _fingerprint)
 		else :
-			self._transcript.error (0x78f26ad5, "failed executing `%s`!", _identifier)
+			self._transcript.error (0x78f26ad5, "failed executing [%s]!", _fingerprint)
 		
 		if len (_transaction.annotations._records) > 0 :
 			self._transcript.debug (0xbf5f42ac, "annotations:")
@@ -80,7 +94,7 @@ class Execution (object) :
 		elif _debug :
 			_transaction._trace (self._transcript.info, True)
 		
-		self._transcript.trace (0x4b83e138, "executed `%s`;", _identifier)
+		self._transcript.trace (0x4b83e138, "executed [%s];", _fingerprint)
 		self._transcript.cut ()
 	
 	

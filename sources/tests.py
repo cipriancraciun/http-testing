@@ -23,11 +23,8 @@ class TestBase (object) :
 	
 	def __init__ (self, _context, _identifier, _request_builder, _response_enforcer, _debug) :
 		
-		if _identifier is None :
-			raise Exception (0x1b66486c)
-		
 		self._context = _context
-		self.identifier = _identifier
+		self.identifier = enforce_identifier (_identifier)
 		
 		if _request_builder is None :
 			_request_builder = requests (self._context)
@@ -173,21 +170,4 @@ def _chainer_apply (_chainer, _self) :
 			_self = _callback (*_arguments_list, **_arguments_dict)
 	
 	return _self
-
-
-
-
-def _enforce_identifier (_identifier) :
-	if isinstance (_identifier, int) :
-		if _identifier < 0 :
-			raise Exception (0x6088aa94)
-		if _identifier < 0xfffffffffffffff :
-			raise Exception (0x044e4ef22)
-		if _identifier >= 0xffffffffffffffff :
-			raise Exception (0xb9b27319)
-		_identifier = "{0x016}" % _identifier
-	elif isinstance (_identifier, basestring) :
-		pass
-	else :
-		raise Exception (0x17ef4607)
 
