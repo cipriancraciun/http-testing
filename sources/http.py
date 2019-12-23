@@ -3,6 +3,7 @@
 import httplib
 import ssl
 import urllib
+import time
 
 
 from request_builders import *
@@ -284,22 +285,22 @@ class Transaction (object) :
 		if self._status != "prepared" :
 			raise Exception (0x293086ba)
 		self._status = "executing"
-		_http = self._execute_connect ()
-		self._execute_request (_http)
-		self._execute_response (_http)
-		self.transport.release (_http)
+		_connection = self._execute_connect ()
+		self._execute_request (_connection)
+		self._execute_response (_connection)
+		self.transport.release (_connection)
 		self._status = "executed"
 		self._transcript.trace (0x21a65363, "executed;")
 	
 	
 	def _execute_connect (self) :
 		
-		_http = self.transport.connect (self.request.server_endpoint, self.request.server_tls)
+		_connection = self.transport.connect (self.request.server_endpoint, self.request.server_tls)
 		
-		return _http
+		return _connection
 	
 	
-	def _execute_request (self, _http) :
+	def _execute_request (self, _connection) :
 		
 		if self.request.query is None :
 			_selector = self.request.path
@@ -321,31 +322,31 @@ class Transaction (object) :
 		if self.request.body is not None :
 			self._transcript.trace (0x02551cf9, "-- body: `%d`;", len (self.request.body))
 		
-		# NOTE:  _http.request (self.request.method, _selector, self.request.body, _headers)
+		# NOTE:  _connection.request (self.request.method, _selector, self.request.body, _headers)
 		
-		_http.putrequest (self.request.method, _selector, True, True)
+		_connection.putrequest (self.request.method, _selector, True, True)
 		
 		for _name, _value in _headers :
 			if _name.lower () == "content-length" :
 				raise Exception (0xb9234238)
-			_http.putheader (_name, _value)
+			_connection.putheader (_name, _value)
 		if self.request.body is not None :
-			_http.putheader ("Content-Length", str (len (self.request.body)))
+			_connection.putheader ("Content-Length", str (len (self.request.body)))
 		elif self.request.method not in ["GET", "HEAD"] :
-			_http.putheader ("Content-Length", "0")
-		_http.endheaders ()
+			_connection.putheader ("Content-Length", "0")
+		_connection.endheaders ()
 		
 		if self.request.body is not None :
-			_http.send (self.request.body)
+			_connection.send (self.request.body)
 		else :
-			_http.send ("")
+			_connection.send ("")
 	
 	
-	def _execute_response (self, _http) :
+	def _execute_response (self, _connection) :
 		
 		self._transcript.trace (0x9e154782, "receiving response...")
 		
-		_response = _http.getresponse ()
+		_response = _connection.getresponse ()
 		
 		_status_code = _response.status
 		_status_version = _response.version
@@ -408,32 +409,57 @@ class Transport (object) :
 	def __init__ (self, _context) :
 		self._context = _context
 		self._transcript = transcript (self, 0xb497f562)
+		self._connections_pool = dict ()
 	
 	
 	def connect (self, _endpoint, _tls) :
+		
+		_key = (_endpoint, _tls)
+		if _key in self._connections_pool :
+			_connections = self._connections_pool[_key]
+			if len (_connections) > 0 :
+				_connection = _connections.pop ()
+				if (time.time () - _connection.____httt_timestamp) <= 6 :
+					self._transcript.debug (0x3a3b0c4d, "reusing connection to `%s` with TLS `%s`;", _endpoint, _tls)
+					_connection.____httt_counter += 1
+					return _connection
 		
 		self._transcript.debug (0x95adb4dd, "connecting to `%s` with TLS `%s`...", _endpoint, _tls)
 		
 		if _tls :
 			_ssl = ssl._create_unverified_context ()
-			_http = httplib.HTTPSConnection (
+			_connection = httplib.HTTPSConnection (
 					host = _endpoint,
 					strict = True,
 					timeout = 6,
 					context = _ssl,
 				)
 		else :
-			_http = httplib.HTTPConnection (
+			_connection = httplib.HTTPConnection (
 					host = _endpoint,
 					strict = True,
 					timeout = 6,
 				)
 		
-		_http.connect ()
+		_connection.connect ()
 		
-		return _http
+		_connection.____httt_key = _key
+		_connection.____httt_counter = 1
+		
+		return _connection
 	
 	
-	def release (self, _http) :
-		_http.close ()
+	def release (self, _connection) :
+		
+		if _connection.____httt_counter >= 64 :
+			_connection.close ()
+			return
+		
+		_connection.____httt_timestamp = time.time ()
+		
+		_key = _connection.____httt_key
+		if _key not in self._connections_pool :
+			self._connections_pool[_key] = [_connection]
+		else :
+			self._connections_pool[_key].append (_connection)
 
