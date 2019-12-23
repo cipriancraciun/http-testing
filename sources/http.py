@@ -394,7 +394,16 @@ class Transaction (object) :
 				_tracer (0x08574ba6, "* annotations:")
 				_tracer_annotations = _tracer.fork ()
 				for _record in self.annotations._records :
-					_prefix = "-- [%-4.4s] " % (_record.levelname,)
+					if _record.levelname == "ERROR" or _record.levelname == "CRITICAL" :
+						_prefix = "-- !!!! "
+					elif _record.levelname == "WARNING" :
+						_prefix = "-- [ww] "
+					elif _record.levelname == "INFO" or _record.levelname == "NOTICE" :
+						_prefix = "-- [ii] "
+					elif _record.levelname == "DEBUG" :
+						_prefix = "-- [dd] "
+					else :
+						_prefix = "-- [??] [%-6.6s] " % (_record.levelname,)
 					_tracer_annotations (0xcb6c9a7b, _prefix + _record.msg, *_record.args)
 			else :
 				_tracer (0x0c31f78c, "* annotations: none;")
