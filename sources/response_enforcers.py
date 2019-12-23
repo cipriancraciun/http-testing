@@ -178,18 +178,25 @@ class ResponseEnforcer (object) :
 	
 	def enforce (self, _transaction) :
 		
+		_failed = False
+		
 		if self._parent is not None :
 			_outcome = self._parent.enforce (_transaction)
 			if _outcome is not None and _outcome is not True :
-				return _outcome
+				# return _outcome
+				_failed = True
 		
 		for _enforcer in self._enforcers :
 			_outcome = _enforcer (_transaction)
 			if _outcome is not None and _outcome is not True :
-				return _outcome
+				# return _outcome
+				_failed = True
 		
 		for _enforcer in self._extends :
 			_outcome = _enforcer.enforce (_transaction)
 			if _outcome is not None and _outcome is not True :
-				return _outcome
+				# return _outcome
+				_failed = True
+		
+		return not _failed
 
