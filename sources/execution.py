@@ -18,12 +18,14 @@ class Execution (object) :
 	
 	
 	def execute (self, _test, _debug = None) :
+		self._transcript.cut ()
 		self._transcript.trace (0x91657e21, "executing...")
 		_debug = self._debug if _debug is None else _debug
 		self._execute (_test, (), self._debug)
 		if len (self._transactions) == 0 :
 			self._transcript.info (0xc5327e15, "execution yielded no transactions!")
 		self._transcript.trace (0x310eac5e, "executed;")
+		self._transcript.cut ()
 	
 	
 	def _execute (self, _test, _stack, _debug) :
@@ -49,6 +51,7 @@ class Execution (object) :
 		_stack = _stack + (_test.identifier,)
 		_identifier = " -- ".join (_stack)
 		_debug = _test._debug if _debug is None else _debug
+		self._transcript.cut ()
 		self._transcript.info (0xe6c0c539, "executing `%s`...", _identifier)
 		
 		_session = Session ()
@@ -68,10 +71,16 @@ class Execution (object) :
 			self._transcript.debug (0xbf5f42ac, "annotations:")
 			_transaction.annotations._propagate (self._transcript)
 		
-		if not _succeeded or _debug :
+		if not _succeeded :
+			if _debug :
+				_transaction._trace (self._transcript.warning, False)
+			else :
+				_transaction._trace (self._transcript.debug, False)
+		elif _debug :
 			_transaction._trace (self._transcript.info, True)
 		
 		self._transcript.trace (0x4b83e138, "executed `%s`;", _identifier)
+		self._transcript.cut ()
 	
 	
 	def _trace (self, _tracer) :
