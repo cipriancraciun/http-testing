@@ -216,9 +216,10 @@ class Session (object) :
 class Transaction (object) :
 	
 	
-	def __init__ (self, _context, _session, _request_builder, _response_enforcer) :
+	def __init__ (self, _context, _transport, _session, _request_builder, _response_enforcer) :
 		
 		self.context = _context
+		self.transport = _transport
 		self.session = _session
 		self.request = None
 		self.response = None
@@ -286,31 +287,14 @@ class Transaction (object) :
 		_http = self._execute_connect ()
 		self._execute_request (_http)
 		self._execute_response (_http)
-		_http.close ()
+		self.transport.release (_http)
 		self._status = "executed"
 		self._transcript.trace (0x21a65363, "executed;")
 	
 	
 	def _execute_connect (self) :
 		
-		self._transcript.debug (0x95adb4dd, "connecting to `%s` with TLS `%s`...", self.request.server_endpoint, self.request.server_tls)
-		
-		if self.request.server_tls :
-			_ssl = ssl._create_unverified_context ()
-			_http = httplib.HTTPSConnection (
-					host = self.request.server_endpoint,
-					strict = True,
-					timeout = 6,
-					context = _ssl,
-				)
-		else :
-			_http = httplib.HTTPConnection (
-					host = self.request.server_endpoint,
-					strict = True,
-					timeout = 6,
-				)
-		
-		_http.connect ()
+		_http = self.transport.connect (self.request.server_endpoint, self.request.server_tls)
 		
 		return _http
 	
@@ -414,4 +398,42 @@ class Transaction (object) :
 					_tracer (0xcb6c9a7b, "-- " + _record.msg, *_record.args)
 			else :
 				_tracer (0x0c31f78c, "* annotations: none;")
+
+
+
+
+class Transport (object) :
+	
+	
+	def __init__ (self, _context) :
+		self._context = _context
+		self._transcript = transcript (self, 0xb497f562)
+	
+	
+	def connect (self, _endpoint, _tls) :
+		
+		self._transcript.debug (0x95adb4dd, "connecting to `%s` with TLS `%s`...", _endpoint, _tls)
+		
+		if _tls :
+			_ssl = ssl._create_unverified_context ()
+			_http = httplib.HTTPSConnection (
+					host = _endpoint,
+					strict = True,
+					timeout = 6,
+					context = _ssl,
+				)
+		else :
+			_http = httplib.HTTPConnection (
+					host = _endpoint,
+					strict = True,
+					timeout = 6,
+				)
+		
+		_http.connect ()
+		
+		return _http
+	
+	
+	def release (self, _http) :
+		_http.close ()
 

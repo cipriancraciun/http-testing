@@ -13,6 +13,7 @@ class Execution (object) :
 	def __init__ (self, _context) :
 		self._context = _context
 		self._transcript = transcript (self, 0x332ac851)
+		self._transport = Transport (self._context)
 		self._transactions = list ()
 		self._debug = None
 	
@@ -55,7 +56,7 @@ class Execution (object) :
 		self._transcript.info (0xe6c0c539, "executing `%s`...", _identifier)
 		
 		_session = Session ()
-		_transaction = Transaction (self._context, _session, _test.requests, _test.responses)
+		_transaction = Transaction (self._context, self._transport, _session, _test.requests, _test.responses)
 		_transaction.prepare ()
 		_transaction.execute ()
 		_succeeded = _transaction.enforce ()
