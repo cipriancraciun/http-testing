@@ -389,6 +389,16 @@ class Transaction (object) :
 	
 	def _trace (self, _tracer, _annotations = True) :
 		
+		if _annotations :
+			if len (self.annotations._records) > 0 :
+				_tracer (0x08574ba6, "* annotations:")
+				_tracer_annotations = _tracer.fork ()
+				for _record in self.annotations._records :
+					_prefix = "-- [%-4.4s] " % (_record.levelname,)
+					_tracer_annotations (0xcb6c9a7b, _prefix + _record.msg, *_record.args)
+			else :
+				_tracer (0x0c31f78c, "* annotations: none;")
+		
 		if self.request is not None :
 			_tracer (0xa21095ed, "* request:")
 			self.request._trace (_tracer.fork ())
@@ -400,16 +410,6 @@ class Transaction (object) :
 			self.response._trace (_tracer.fork ())
 		else :
 			_tracer (0x1c59088d, "* response: none;")
-		
-		if _annotations :
-			if len (self.annotations._records) > 0 :
-				_tracer (0x08574ba6, "* annotations:")
-				_tracer_annotations = _tracer.fork ()
-				for _record in self.annotations._records :
-					_prefix = "-- [%-4.4s] " % (_record.levelname,)
-					_tracer_annotations (0xcb6c9a7b, _prefix + _record.msg, *_record.args)
-			else :
-				_tracer (0x0c31f78c, "* annotations: none;")
 
 
 
