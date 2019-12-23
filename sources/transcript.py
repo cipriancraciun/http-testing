@@ -60,11 +60,23 @@ class Transcript (Tracer) :
 		self._instance = _instance
 	
 	
+	def cut (self) :
+		global _transcript_last_was_cut
+		if _transcript_last_was_cut :
+			return
+		self._logger.log (logging.INFO, "----------------------------")
+		_transcript_last_was_cut = True
+	
 	def _log (self, _level, _code, _arguments_list, _arguments_dict) :
-		_message = _arguments_list[0]
-		_arguments_list = _arguments_list[1:]
-		_prefix = "[%08x:%08x:%08x]  " % (self._code, self._instance, _code)
-		self._logger.log (_level, _prefix + _message, *_arguments_list, **_arguments_dict)
+		global _transcript_last_was_cut
+		if self._logger.isEnabledFor (_level) :
+			_message = _arguments_list[0]
+			_arguments_list = _arguments_list[1:]
+			_prefix = "[%08x:%08x:%08x]  " % (self._code, self._instance, _code)
+			self._logger._log (_level, _prefix + _message, tuple (_arguments_list), **_arguments_dict)
+			_transcript_last_was_cut = False
+
+_transcript_last_was_cut = False
 
 
 
