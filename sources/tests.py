@@ -11,7 +11,7 @@ import request_builders, response_enforcers
 
 
 
-def tests (_identifier, _context = None, requests = None, responses = None, debug = None) :
+def tests (identifier = None, requests = None, responses = None, debug = None, _context = None) :
 	
 	if _context is None :
 		_context = Context ()
@@ -22,7 +22,7 @@ def tests (_identifier, _context = None, requests = None, responses = None, debu
 	if isinstance (responses, Chainer) :
 		responses = _chainer_apply (responses, response_enforcers.responses (_context))
 	
-	_tests = Tests (_context, _identifier, requests, responses, debug)
+	_tests = Tests (_context, identifier, requests, responses, debug)
 	return _tests
 
 
