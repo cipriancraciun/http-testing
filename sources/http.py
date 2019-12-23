@@ -82,6 +82,8 @@ class Request (object) :
 		self.headers = flatten_multi_map (self.headers, normalize_string, None, normalize_string, None)
 		if len (self.headers) == 0 :
 			self.headers = None
+		else :
+			self.headers.sort ()
 	
 	def _normalize_body (self) :
 		self.body = normalize_string (self.body)
@@ -169,6 +171,9 @@ class Response (object) :
 		self.headers = flatten_multi_map (self.headers, normalize_string, None, normalize_string, None)
 		if len (self.headers) == 0 :
 			self.headers = None
+		else :
+			self.headers.sort ()
+		
 		self.headers_0 = multi_map_to_dict (self.headers, normalize_string_lower, None, None, None)
 		
 		self.body = normalize_string (self.body)
@@ -234,7 +239,7 @@ class Transaction (object) :
 	
 	
 	def prepare (self) :
-		self._transcript.trace (0xc7e3cdda, "preparing...")
+		self._transcript.internal (0xc7e3cdda, "preparing...")
 		if self._status != "created" :
 			raise Exception (0x1c587c30)
 		self._status = "preparing"
@@ -250,11 +255,11 @@ class Transaction (object) :
 			raise Exception (0x52c05f72)
 		
 		self._status = "prepared"
-		self._transcript.trace (0x40fb50f3, "prepared;")
+		self._transcript.internal (0x40fb50f3, "prepared;")
 	
 	
 	def enforce (self) :
-		self._transcript.trace (0xd787ec43, "enforcing...")
+		self._transcript.internal (0xd787ec43, "enforcing...")
 		if self._status != "executed" :
 			raise Exception (0x30fdb113)
 		self._status = "enforcing"
@@ -276,12 +281,12 @@ class Transaction (object) :
 		self.failed = not self.succeeded
 		
 		self._status = "enforced"
-		self._transcript.trace (0x5ea3bc9e, "enforced;")
+		self._transcript.internal (0x5ea3bc9e, "enforced;")
 		return self.succeeded
 	
 	
 	def execute (self) :
-		self._transcript.trace (0x1e41cf29, "executing...")
+		self._transcript.internal (0x1e41cf29, "executing...")
 		if self._status != "prepared" :
 			raise Exception (0x293086ba)
 		self._status = "executing"
@@ -290,7 +295,7 @@ class Transaction (object) :
 		self._execute_response (_connection)
 		self.transport.release (_connection)
 		self._status = "executed"
-		self._transcript.trace (0x21a65363, "executed;")
+		self._transcript.internal (0x21a65363, "executed;")
 	
 	
 	def _execute_connect (self) :
@@ -315,12 +320,14 @@ class Transaction (object) :
 		if self.request.headers is not None :
 			_headers.extend (self.request.headers)
 		
+		_transcript = self._transcript.fork ()
+		
 		if self.request.host is not None :
-			self._transcript.trace (0x02551cf9, "-- host: `%s`;", len (self.request.host))
+			_transcript.internal (0x02551cf9, "-- host: `%s`;", self.request.host)
 		for _name, _value in _headers :
-			self._transcript.trace (0x02551cf9, "-- header `%s`: `%s`;", _name, _value)
+			_transcript.internal (0x02551cf9, "-- header `%s`: `%s`;", _name, _value)
 		if self.request.body is not None :
-			self._transcript.trace (0x02551cf9, "-- body: `%d`;", len (self.request.body))
+			_transcript.internal (0x02551cf9, "-- body: `%d`;", len (self.request.body))
 		
 		# NOTE:  _connection.request (self.request.method, _selector, self.request.body, _headers)
 		
@@ -344,7 +351,7 @@ class Transaction (object) :
 	
 	def _execute_response (self, _connection) :
 		
-		self._transcript.trace (0x9e154782, "receiving response...")
+		self._transcript.internal (0x9e154782, "receiving response...")
 		
 		_response = _connection.getresponse ()
 		
@@ -359,13 +366,15 @@ class Transaction (object) :
 		else :
 			raise Exception (0xcb3ab75e)
 		
-		self._transcript.debug (0xa6fcadaf, "received response with status `%s`;", _status_code)
-		self._transcript.trace (0xf1999901, "-- version: `%s`;", _status_version)
-		self._transcript.trace (0xf1999901, "-- message: `%s`;", _status_message)
+		_transcript = self._transcript.fork ()
+		
+		_transcript.debug (0xa6fcadaf, "-- status: `%s`;", _status_code)
+		_transcript.internal (0x92172b62, "-- version: `%s`;", _status_version)
+		_transcript.internal (0x29813ff7, "-- message: `%s`;", _status_message)
 		
 		_headers = list ()
 		for _name, _value in _response.getheaders () :
-			self._transcript.trace (0x3ed4ed10, "-- header `%s`: `%s`;", _name, _value)
+			_transcript.internal (0x3ed4ed10, "-- header `%s`: `%s`;", _name, _value)
 			_headers.append ((_name, _value))
 		
 		_body = _response.read ()
@@ -373,7 +382,7 @@ class Transaction (object) :
 			_body = None
 		
 		if _body is not None :
-			self._transcript.trace (0xffe8cfb6, "-- body: `%d`;", len (_body))
+			_transcript.internal (0xffe8cfb6, "-- body: `%d`;", len (_body))
 		
 		self.response = Response (_status_code, _status_version, _status_message, _headers, _body)
 	
@@ -382,21 +391,22 @@ class Transaction (object) :
 		
 		if self.request is not None :
 			_tracer (0xa21095ed, "* request:")
-			self.request._trace (_tracer)
+			self.request._trace (_tracer.fork ())
 		else :
 			_tracer (0xbce1112c, "* request: none;")
 		
 		if self.response is not None :
 			_tracer (0x80d7ba56, "* response:")
-			self.response._trace (_tracer)
+			self.response._trace (_tracer.fork ())
 		else :
 			_tracer (0x1c59088d, "* response: none;")
 		
 		if _annotations :
 			if len (self.annotations._records) > 0 :
 				_tracer (0x08574ba6, "* annotations:")
+				_tracer_annotations = _tracer.fork ()
 				for _record in self.annotations._records :
-					_tracer (0xcb6c9a7b, "-- " + _record.msg, *_record.args)
+					_tracer_annotations (0xcb6c9a7b, "-- " + _record.msg, *_record.args)
 			else :
 				_tracer (0x0c31f78c, "* annotations: none;")
 

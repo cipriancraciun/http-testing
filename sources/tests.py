@@ -6,13 +6,23 @@ from request_builders import *
 from response_enforcers import *
 from transcript import *
 
+import request_builders, response_enforcers
+
 
 
 
 def tests (_identifier, _context = None, requests = None, responses = None, debug = None) :
+	
 	if _context is None :
 		_context = Context ()
-	_tests = Tests (_context, _identifier, None, None, debug)
+	
+	if isinstance (requests, Chainer) :
+		requests = _chainer_apply (requests, request_builders.requests (_context))
+	
+	if isinstance (responses, Chainer) :
+		responses = _chainer_apply (responses, response_enforcers.responses (_context))
+	
+	_tests = Tests (_context, _identifier, requests, responses, debug)
 	return _tests
 
 
