@@ -12,7 +12,7 @@
 	_output="${2}"
 	shift -- 2
 	test -f "${_source}"
-	python2 -s -S -E -R -O -B -- "${_source}" "${@}" >| "${_output}.tmp"
+	python2 -s -E -R -O -B -- "${_source}" "${@}" >| "${_output}.tmp"
 	mv -T -- "${_output}.tmp" "${_output}"
 !!
 

@@ -15,10 +15,10 @@
 	test "${#}" -ge 1
 	_example="${1}"
 	_source="./examples/${_example}.py"
-	_output="./examples/_reports/${_example}.cfg"
+	_output="./examples/_reports/${_example}.txt"
 	shift -- 1
 	"${ZRUN[@]}" ':: tools / execute' "${_source}" "${_output}" "${@}"
-	exec -- cat -- "${_output}"
+	# exec -- cat -- "${_output}"
 !!
 
 
@@ -26,7 +26,7 @@
 	test "${#}" -ge 1
 	_example="${1}"
 	_source="./examples/${_example}.py"
-	_output="./examples/_reports/${_example}.cfg"
+	_output="./examples/_reports/${_example}.txt"
 	shift -- 1
 	exec -- "${ZRUN[@]}" ':: tools / execute + less' "${_source}" "${_output}" "${@}"
 !!
@@ -35,7 +35,7 @@
 	test "${#}" -ge 1
 	_example="${1}"
 	_source="./examples/${_example}.py"
-	_output="./examples/_reports/${_example}.cfg"
+	_output="./examples/_reports/${_example}.txt"
 	shift -- 1
 	exec -- "${ZRUN[@]}" ':: tools / execute + diff-lines' "${_source}" "${_output}" "${@}"
 !!
@@ -44,7 +44,7 @@
 	test "${#}" -ge 1
 	_example="${1}"
 	_source="./examples/${_example}.py"
-	_output="./examples/_reports/${_example}.cfg"
+	_output="./examples/_reports/${_example}.txt"
 	shift -- 1
 	exec -- "${ZRUN[@]}" ':: tools / execute + diff-words' "${_source}" "${_output}" "${@}"
 !!
@@ -81,7 +81,7 @@
 	build ./examples/_reports/.sources : touch {{ range $_, $_source := $_sources }} ./sources/{{ $_source }}.py {{ end }}
 	
 	{{ range $_, $_example := $_examples }}
-	build ./examples/_reports/{{ $_example }}.cfg : execute ./examples/{{ $_example }}.py | ./examples/_reports/.sources
+	build ./examples/_reports/{{ $_example }}.txt : execute ./examples/{{ $_example }}.py | ./examples/_reports/.sources
 	{{ end }}
 	
 !!
