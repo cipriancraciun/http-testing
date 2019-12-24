@@ -17,8 +17,17 @@
 	_source="./examples/${_example}.py"
 	_output="./examples/_reports/${_example}.txt"
 	shift -- 1
-	"${ZRUN[@]}" ':: tools / execute' "${_source}" "${_output}" "${@}"
-	# exec -- cat -- "${_output}"
+	exec -- "${ZRUN[@]}" ':: tools / execute' "${_source}" "${_output}" "${@}"
+!!
+
+
+--<< examples / execute (output)
+	test "${#}" -ge 2
+	_example="${1}"
+	_output="${2}"
+	_source="./examples/${_example}.py"
+	shift -- 1
+	exec -- "${ZRUN[@]}" ':: tools / execute' "${_source}" "${_output}" "${@}"
 !!
 
 
@@ -99,6 +108,8 @@
 	:: examples / execute + less / {{ $_example }} :: exec -- "${ZRUN[@]}" ':: examples / execute + less' '{{ $_example }}' "${@}"
 	:: examples / execute + diff-lines / {{ $_example }} :: exec -- "${ZRUN[@]}" ':: examples / execute + diff-lines' '{{ $_example }}' "${@}"
 	:: examples / execute + diff-words / {{ $_example }} :: exec -- "${ZRUN[@]}" ':: examples / execute + diff-words' '{{ $_example }}' "${@}"
+	:: examples / execute (stdout) / {{ $_example }} :: exec -- "${ZRUN[@]}" ':: examples / execute (output)' '{{ $_example }}' /dev/stdout "${@}"
+	:: examples / execute (null) / {{ $_example }} :: exec -- "${ZRUN[@]}" ':: examples / execute (output)' '{{ $_example }}' /dev/null "${@}"
 	{{ end }}
 	
 	++<< examples / execute / *
