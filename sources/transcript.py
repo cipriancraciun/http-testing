@@ -2,10 +2,6 @@
 import logging
 
 
-_logging_level = logging.INFO
-# _logging_level = logging.DEBUG
-# _logging_level = logging.NOTSET + 1
-
 logging.NOTICE = (logging.INFO + logging.WARNING) / 2
 logging.addLevelName (logging.NOTICE, "NOTICE")
 
@@ -17,6 +13,12 @@ logging.addLevelName (logging.INTERNAL, "DEBUG")
 
 logging.DUMP = logging.CRITICAL * 2
 logging.addLevelName (logging.DUMP, "DUMP")
+
+
+_logging_level = logging.NOTICE
+_logging_level = logging.INFO
+# _logging_level = logging.DEBUG
+# _logging_level = logging.NOTSET + 1
 
 
 if len (logging.root.handlers) == 0 :
@@ -67,28 +69,28 @@ class Tracer (object) :
 	
 	
 	def critical (self, _code, *_arguments_list, **_arguments_dict) :
-		return self._log (logging.CRITICAL, _code, _arguments_list, _arguments_dict, self._indent)
+		return self._log (logging.CRITICAL, _code, _arguments_list, _arguments_dict, None)
 	
 	def error (self, _code, *_arguments_list, **_arguments_dict) :
-		return self._log (logging.ERROR, _code, _arguments_list, _arguments_dict, self._indent)
+		return self._log (logging.ERROR, _code, _arguments_list, _arguments_dict, None)
 	
 	def warning (self, _code, *_arguments_list, **_arguments_dict) :
-		return self._log (logging.WARNING, _code, _arguments_list, _arguments_dict, self._indent)
+		return self._log (logging.WARNING, _code, _arguments_list, _arguments_dict, None)
 	
 	def notice (self, _code, *_arguments_list, **_arguments_dict) :
-		return self._log (logging.NOTICE, _code, _arguments_list, _arguments_dict, self._indent)
+		return self._log (logging.NOTICE, _code, _arguments_list, _arguments_dict, None)
 	
 	def info (self, _code, *_arguments_list, **_arguments_dict) :
-		return self._log (logging.INFO, _code, _arguments_list, _arguments_dict, self._indent)
+		return self._log (logging.INFO, _code, _arguments_list, _arguments_dict, None)
 	
 	def debug (self, _code, *_arguments_list, **_arguments_dict) :
-		return self._log (logging.DEBUG, _code, _arguments_list, _arguments_dict, self._indent)
+		return self._log (logging.DEBUG, _code, _arguments_list, _arguments_dict, None)
 	
 	def internal (self, _code, *_arguments_list, **_arguments_dict) :
-		return self._log (logging.INTERNAL, _code, _arguments_list, _arguments_dict, self._indent)
+		return self._log (logging.INTERNAL, _code, _arguments_list, _arguments_dict, None)
 	
 	def _push (self, _level, _code, _arguments_list, _arguments_dict, _indent) :
-		return self._log (_level, _code, _arguments_list, _arguments_dict, self._indent + _indent)
+		return self._log (_level, _code, _arguments_list, _arguments_dict, _indent)
 	
 	
 	def critical_tracer (self, _indent = False) :
@@ -115,7 +117,7 @@ class Tracer (object) :
 	
 	def fork (self, _indent = True) :
 		_fork = self._fork ()
-		_fork._indent += 1
+		_fork._indent = _merge_indent (self._indent, _indent)
 		return _fork
 	
 	def _fork (self) :
@@ -127,18 +129,13 @@ class Tracer (object) :
 class TracerFunc (object) :
 	
 	
-	def __init__ (self, _tracer, _push, _level, _indent = False) :
+	def __init__ (self, _tracer, _push, _level, _indent) :
 		
 		self._tracer = _tracer
 		self._push = _push
 		self._level = _level
 		
-		if _indent is True :
-			self._indent = 1
-		elif _indent is False :
-			self._indent = 0
-		else :
-			self._indent = _indent
+		self._indent = _merge_indent (None, _indent)
 	
 	
 	def __call__ (self, _code, *_arguments_list, **_arguments_dict) :
@@ -149,11 +146,12 @@ class TracerFunc (object) :
 		self._tracer.cut ()
 	
 	def fork (self, _indent = True) :
-		_fork = TracerFunc (self._tracer, self._push, self._level, self._indent + 1)
+		_indent = _merge_indent (self._indent, _indent)
+		_fork = TracerFunc (self._tracer, self._push, self._level, _indent)
 		return _fork
 	
-	def indent (self, _indent = 1) :
-		self._indent += _indent
+	def indent (self, _indent = True) :
+		self._indent = _merge_indent (self._indent, _indent)
 
 
 
@@ -193,8 +191,9 @@ class Transcript (Tracer) :
 		if self._logger.isEnabledFor (_level) :
 			_message = _arguments_list[0]
 			_arguments_list = _arguments_list[1:]
-			_prefix = "[%08x:%08x:%08x]  " % (self._code, self._instance, _code)
-			_prefix += "    " * _indent
+			_indent = _merge_indent (self._indent, _indent)
+			_prefix = "[%08x:%08x:%08x]    " % (self._code, self._instance, _code)
+			_prefix += "|  " * _indent
 			self._logger._log (_level, _prefix + _message, tuple (_arguments_list), **_arguments_dict)
 			_transcript_last_was_cut = False
 
@@ -247,7 +246,7 @@ class Dumper (Tracer) :
 		if self._last_was_cut :
 			return
 		self._logger.log (logging.CUT, "")
-		self._logger.log (logging.CUT, "----------------------------")
+		self._logger.log (logging.CUT, "            ------------------------------------------------------------")
 		self._logger.log (logging.CUT, "")
 		self._last_was_cut = True
 	
@@ -255,6 +254,7 @@ class Dumper (Tracer) :
 	def _log (self, _level, _code, _arguments_list, _arguments_dict, _indent) :
 		_message = _arguments_list[0]
 		_arguments_list = _arguments_list[1:]
+		_indent = _merge_indent (self._indent, _indent)
 		_prefix = "[%08x]  " % (_code)
 		_prefix += "    " * _indent
 		self._logger.log (_level, _prefix + _message, *_arguments_list, **_arguments_dict)
@@ -276,6 +276,7 @@ class Annotations (Tracer) :
 	def _log (self, _level, _code, _arguments_list, _arguments_dict, _indent) :
 		_message = _arguments_list[0]
 		_arguments_list = _arguments_list[1:]
+		_indent = _merge_indent (self._indent, _indent)
 		_prefix = "[%08x]  " % _code
 		self._logger.log (_level, _prefix + _message, *_arguments_list, **_arguments_dict)
 	
@@ -285,6 +286,29 @@ class Annotations (Tracer) :
 			_arguments_list = [_record.msg]
 			_arguments_list.extend (_record.args)
 			_tracer._push (_record.levelno, 0xd06d66d4, _arguments_list, _arguments_dict, self._indent)
+
+
+
+
+def _merge_indent (_base, _offset) :
+	
+	if _base is None :
+		_base = 0
+	elif isinstance (_base, int) :
+		pass
+	else :
+		raise Exception (0x726e6666)
+	
+	if _offset is True :
+		_offset = 1
+	elif _offset is False or _offset is None :
+		_offset = 0
+	elif isinstance (_offset, int) :
+		pass
+	else :
+		raise Exception (0x26036305)
+	
+	return _base + _offset
 
 
 
@@ -314,7 +338,7 @@ _transcript_instance_permuter = Permuter ()
 
 def dumper (_stream) :
 	if isinstance (_stream, Dumper) :
-		return TracerFunc (_stream, _stream._push, logging.DUMP)
+		return TracerFunc (_stream, _stream._push, logging.DUMP, None)
 	elif isinstance (_stream, TracerFunc) :
 		return _dumper
 	else :
