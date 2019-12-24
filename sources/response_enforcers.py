@@ -21,6 +21,7 @@ class ResponseEnforcer (object) :
 		self._parent = _parent
 		self._enforcers = list ()
 		self._extends = list ()
+		self._sanitizers = list ()
 		self._forking = False
 	
 	
@@ -158,6 +159,24 @@ class ResponseEnforcer (object) :
 	
 	
 	
+	def sanitize_header (self, _name, _replacement = None) :
+		_enforcer = self._fork_perhaps ()
+		return _enforcer.append_sanitizer (_enforcer._sanitize_header, _name, _replacement)
+	
+	def _sanitize_header (self, _transaction, _name, _replacement) :
+		_name = _name.lower ()
+		if _replacement is None :
+			_replacement = "{...}"
+		_actual = _transaction.response.headers_0.get (_name)
+		if _actual is not None :
+			_transaction.response.headers_0[_name] = _replacement
+			for _index in xrange (len (_transaction.response.headers)) :
+				if _transaction.response.headers[_index][0].lower () == _name :
+					_transaction.response.headers[_index] = (_name, _replacement)
+	
+	
+	
+	
 	def extend (self, _enforcer) :
 		_enforcer_0 = _enforcer._fork_perhaps ()
 		_enforcer = self._fork_perhaps ()
@@ -172,6 +191,13 @@ class ResponseEnforcer (object) :
 		_enforcer = self._fork_perhaps ()
 		_enforcer._enforcers.append (_enforcer_0)
 		return _enforcer
+	
+	
+	def append_sanitizer (self, _callback, *_arguments_list, **_arguments_dict) :
+		_sanitizer_0 = lambda _transaction : _callback (_transaction, *_arguments_list, **_arguments_dict)
+		_sanitizer = self._fork_perhaps ()
+		_sanitizer._sanitizers.append (_sanitizer_0)
+		return _sanitizer
 	
 	
 	
@@ -192,11 +218,25 @@ class ResponseEnforcer (object) :
 				# return _outcome
 				_failed = True
 		
-		for _enforcer in self._extends :
-			_outcome = _enforcer.enforce (_transaction)
+		for _extender in self._extends :
+			_outcome = _extender.enforce (_transaction)
 			if _outcome is not None and _outcome is not True :
 				# return _outcome
 				_failed = True
 		
 		return not _failed
+	
+	
+	
+	
+	def sanitize (self, _transaction) :
+		
+		if self._parent is not None :
+			self._parent.sanitize (_transaction)
+		
+		for _sanitizer in self._sanitizers :
+			_sanitizer (_transaction)
+		
+		for _extender in self._extends :
+			_extender.sanitize (_transaction)
 

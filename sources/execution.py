@@ -118,6 +118,8 @@ class Execution (object) :
 			self._transcript.info (0x4a616c55, "transaction:")
 			_transaction._trace (self._transcript.info_tracer (True), True)
 		
+		_transaction.sanitize ()
+		
 		self._transcript.internal (0x4b83e138, "executed [%s];", _handle)
 		self._transcript.cut ()
 		
@@ -176,7 +178,6 @@ class Execution (object) :
 	def _trace (self, _tracer) :
 		
 		if len (self._transactions) > 0 :
-			
 			
 			_tracer_meta = _tracer.fork (False)
 			_tracer_meta.cut ()

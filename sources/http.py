@@ -285,6 +285,23 @@ class Transaction (object) :
 		return self.succeeded
 	
 	
+	def sanitize (self) :
+		self._transcript.internal (0xd787ec43, "sanitizing...")
+		if self._status != "enforced" :
+			raise Exception (0x5af3ef21)
+		self._status = "sanitizing"
+		
+		if isinstance (self._response_enforcer, ResponseEnforcer) :
+			self._response_enforcer.sanitize (self)
+		elif callable (self._response_enforcer) :
+			pass
+		else :
+			raise Exception (0x520a335c)
+		
+		self._status = "sanitized"
+		self._transcript.internal (0xa4739ad4, "sanitized;")
+	
+	
 	def execute (self) :
 		self._transcript.internal (0x1e41cf29, "executing...")
 		if self._status != "prepared" :
