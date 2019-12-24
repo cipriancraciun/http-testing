@@ -81,7 +81,7 @@ class Execution (object) :
 		if _succeeded :
 			self._transcript.debug (0x9541c9ec, "succeeded executing [%s];", _handle)
 		else :
-			self._transcript.error (0x78f26ad5, "failed executing [%s]!", _handle)
+			self._transcript.error (0x78f26ad5, "failed executing [%s] `%s`!", _handle, _identifier)
 		
 		if len (_transaction.annotations._records) > 0 :
 			self._transcript.debug (0xbf5f42ac, "annotations:")
@@ -108,22 +108,24 @@ class Execution (object) :
 				_tracer.cut ()
 				if not _succeeded :
 					_tracer (0xb86f3e97, "!!!! FAILED !!!!")
-				_tracer (0xc0a5f644, "* transaction:")
-				_tracer_meta = _tracer.fork ()
+				_tracer_meta = _tracer.fork (False)
+				_tracer_meta (0xc0a5f644, "## transaction:")
+				_tracer_meta.indent ()
 				_tracer_meta (0x67181c6a, "* meta:")
 				_tracer_meta.indent ()
 				if _succeeded :
-					_tracer_meta (0x3191db36, "-- outcome: succeeded;")
+					_tracer_meta (0x3191db36, "outcome: succeeded;")
 				else :
-					_tracer_meta (0x2264995e, "-- outcome: failed;")
-				_tracer_meta (0x2d836357, "-- identifier: `%s`;", _identifier)
-				_tracer_meta (0xdb41b7d9, "-- handle: `%s`;", _handle)
-				_transaction._trace (_tracer.fork (), True)
+					_tracer_meta (0x2264995e, "outcome: failed;")
+				_tracer_meta (0x2d836357, "identifier: `%s`;", _identifier)
+				_tracer_meta (0xdb41b7d9, "handle: `%s`;", _handle)
+				_tracer_meta.indent (-1)
+				_transaction._trace (_tracer_meta, True)
 				if not _succeeded :
 					_tracer (0x14aaf57d, "!!!! FAILED !!!!")
 				_tracer.cut ()
 		else :
-			_tracer (0x1cd6ab66, "* transactions: none;")
+			_tracer (0x1cd6ab66, "## transactions: none;")
 	
 	
 	def dump (self, _stream = None) :

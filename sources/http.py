@@ -117,35 +117,35 @@ class Request (object) :
 	def _trace (self, _tracer) :
 		
 		if self.host is not None :
-			_tracer (0x7fc84f53, "-- host: `%s`;", self.host)
+			_tracer (0x7fc84f53, "host: `%s`;", self.host)
 		else :
-			_tracer (0xdc8cf7d9, "-- host: none;")
+			_tracer (0xdc8cf7d9, "host: none;")
 		
 		if self.method is not None :
-			_tracer (0x2ec04778, "-- method: `%s`;", self.method)
+			_tracer (0x2ec04778, "method: `%s`;", self.method)
 		else :
-			_tracer (0xf8d40215, "-- method: unknown;")
+			_tracer (0xf8d40215, "method: unknown;")
 		
 		if self.path is not None :
-			_tracer (0xaa0d0b82, "-- path: `%s`;", self.path)
+			_tracer (0xaa0d0b82, "path: `%s`;", self.path)
 		else :
-			_tracer (0x402dd426, "-- path: unknown;")
+			_tracer (0x402dd426, "path: unknown;")
 		
 		if self.query is not None :
-			_tracer (0xb4970e93, "-- query: `%s`;", self.query)
+			_tracer (0xb4970e93, "query: `%s`;", self.query)
 		else :
-			_tracer (0x763804da, "-- query: none;")
+			_tracer (0x763804da, "query: none;")
 		
 		if self.headers is not None and len (self.headers) > 0 :
 			for _key, _value in self.headers :
-				_tracer (0xe75a9e5b, "-- header `%s`: `%s`;", _key, _value)
+				_tracer (0xe75a9e5b, "header `%s`: `%s`;", _key, _value)
 		else :
-			_tracer (0x4ed6a4ee, "-- headers: none;")
+			_tracer (0x4ed6a4ee, "headers: none;")
 		
 		if self.body is not None :
-			_tracer (0xbb5141bf, "-- body: `%d` bytes;", len (self.body))
+			_tracer (0xbb5141bf, "body: `%d` bytes;", len (self.body))
 		else :
-			_tracer (0xa41d4441, "-- body: none;")
+			_tracer (0xa41d4441, "body: none;")
 
 
 
@@ -182,30 +182,30 @@ class Response (object) :
 	def _trace (self, _tracer) :
 		
 		if self.status_code is not None :
-			_tracer (0xeaa6ad21, "-- status code: `%d`;", self.status_code)
+			_tracer (0xeaa6ad21, "status code: `%d`;", self.status_code)
 		else :
-			_tracer (0x251e03c2, "-- status code: unknown;")
+			_tracer (0x251e03c2, "status code: unknown;")
 		
 		if self.status_version is not None :
-			_tracer (0x87ca843d, "-- status version: `%s`;", self.status_version)
+			_tracer (0x87ca843d, "status version: `%s`;", self.status_version)
 		else :
-			_tracer (0xf2563c0a, "-- status version: unknown;")
+			_tracer (0xf2563c0a, "status version: unknown;")
 		
 		if self.status_message is not None :
-			_tracer (0x8820e5f1, "-- status message: `%s`;", self.status_message)
+			_tracer (0x8820e5f1, "status message: `%s`;", self.status_message)
 		else :
-			_tracer (0xd3428693, "-- status message: unknown;")
+			_tracer (0xd3428693, "status message: unknown;")
 		
 		if self.headers is not None and len (self.headers) > 0 :
 			for _key, _value in self.headers :
-				_tracer (0x78ba5bbe, "-- header `%s`: `%s`;", _key, _value)
+				_tracer (0x78ba5bbe, "header `%s`: `%s`;", _key, _value)
 		else :
-			_tracer (0x0e792726, "-- headers: none;")
+			_tracer (0x0e792726, "headers: none;")
 		
 		if self.body is not None :
-			_tracer (0xfea4219c, "-- body: `%d` bytes;", len (self.body))
+			_tracer (0xfea4219c, "body: `%d` bytes;", len (self.body))
 		else :
-			_tracer (0xe800f587, "-- body: none;")
+			_tracer (0xe800f587, "body: none;")
 
 
 
@@ -323,11 +323,11 @@ class Transaction (object) :
 		_transcript = self._transcript.fork ()
 		
 		if self.request.host is not None :
-			_transcript.internal (0x02551cf9, "-- host: `%s`;", self.request.host)
+			_transcript.internal (0x02551cf9, "host: `%s`;", self.request.host)
 		for _name, _value in _headers :
-			_transcript.internal (0x02551cf9, "-- header `%s`: `%s`;", _name, _value)
+			_transcript.internal (0x02551cf9, "header `%s`: `%s`;", _name, _value)
 		if self.request.body is not None :
-			_transcript.internal (0x02551cf9, "-- body: `%d`;", len (self.request.body))
+			_transcript.internal (0x02551cf9, "body: `%d`;", len (self.request.body))
 		
 		# NOTE:  _connection.request (self.request.method, _selector, self.request.body, _headers)
 		
@@ -351,7 +351,7 @@ class Transaction (object) :
 	
 	def _execute_response (self, _connection) :
 		
-		self._transcript.internal (0x9e154782, "receiving response...")
+		self._transcript.debug (0x9e154782, "receiving response...")
 		
 		_response = _connection.getresponse ()
 		
@@ -368,13 +368,13 @@ class Transaction (object) :
 		
 		_transcript = self._transcript.fork ()
 		
-		_transcript.debug (0xa6fcadaf, "-- status: `%s`;", _status_code)
-		_transcript.internal (0x92172b62, "-- version: `%s`;", _status_version)
-		_transcript.internal (0x29813ff7, "-- message: `%s`;", _status_message)
+		_transcript.internal (0xa6fcadaf, "status: `%s`;", _status_code)
+		_transcript.internal (0x92172b62, "version: `%s`;", _status_version)
+		_transcript.internal (0x29813ff7, "message: `%s`;", _status_message)
 		
 		_headers = list ()
 		for _name, _value in _response.getheaders () :
-			_transcript.internal (0x3ed4ed10, "-- header `%s`: `%s`;", _name, _value)
+			_transcript.internal (0x3ed4ed10, "header `%s`: `%s`;", _name, _value)
 			_headers.append ((_name, _value))
 		
 		_body = _response.read ()
@@ -382,7 +382,7 @@ class Transaction (object) :
 			_body = None
 		
 		if _body is not None :
-			_transcript.internal (0xffe8cfb6, "-- body: `%d`;", len (_body))
+			_transcript.internal (0xffe8cfb6, "body: `%d`;", len (_body))
 		
 		self.response = Response (_status_code, _status_version, _status_message, _headers, _body)
 	
@@ -395,15 +395,15 @@ class Transaction (object) :
 				_tracer_annotations = _tracer.fork ()
 				for _record in self.annotations._records :
 					if _record.levelname == "ERROR" or _record.levelname == "CRITICAL" :
-						_prefix = "-- !!!! "
+						_prefix = "!!!! "
 					elif _record.levelname == "WARNING" :
-						_prefix = "-- [ww] "
+						_prefix = "[ww] "
 					elif _record.levelname == "INFO" or _record.levelname == "NOTICE" :
-						_prefix = "-- [ii] "
+						_prefix = "[ii] "
 					elif _record.levelname == "DEBUG" :
-						_prefix = "-- [dd] "
+						_prefix = "[dd] "
 					else :
-						_prefix = "-- [??] [%-6.6s] " % (_record.levelname,)
+						_prefix = "[??] [%-6.6s] " % (_record.levelname,)
 					_tracer_annotations (0xcb6c9a7b, _prefix + _record.msg, *_record.args)
 			else :
 				_tracer (0x0c31f78c, "* annotations: none;")
