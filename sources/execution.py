@@ -28,36 +28,28 @@ class Execution (object) :
 		self._transcript.cut ()
 		self._transcript.internal (0x91657e21, "executing...")
 		_debug = self._debug if _debug is None else _debug
-		self._execute (_test, None, None, self._debug)
+		self._execute (_test, None, None, self._debug, False)
 		self._transcript.internal (0x310eac5e, "executed;")
 		self._transcript.cut ()
 		self._report_execution (_debug)
 	
 	
-	def _execute (self, _test, _tests_stack, _identifier_stack, _debug) :
+	def _execute (self, _test, _tests_stack, _identifier_stack, _debug, _skip) :
 		if isinstance (_test, tests.Test) :
-			self._execute_test (_test, _tests_stack, _identifier_stack, _debug)
+			self._execute_test (_test, _tests_stack, _identifier_stack, _debug, _skip)
 		elif isinstance (_test, tests.Tests) :
-			self._execute_tests (_test, _tests_stack, _identifier_stack, _debug)
+			self._execute_tests (_test, _tests_stack, _identifier_stack, _debug, _skip)
 		else :
 			raise Exception (0xbe83caa9)
 		self._report_progress (_debug)
 	
 	
-	def _execute_tests (self, _tests, _tests_stack, _identifier_stack, _debug) :
+	def _execute_tests (self, _tests, _tests_stack, _identifier_stack, _debug, _skip) :
 		
 		_tests_stack = (_tests_stack, _tests)
 		_identifier_stack = (_identifier_stack, _tests.identifier)
 		_identifier = stringify_identifier (_identifier_stack)
 		_handle = fingerprint (_identifier_stack)
-		
-		if self._hooks is not None and not self._hooks.should_execute_tests (_handle, _identifier, _tests) :
-			self._transcript.debug (0x94dc4cef, "skipping [%s] `%s`...", _handle, _identifier)
-			self._update_statistics (_tests_stack, None)
-			return
-		
-		_debug = _tests._debug if _debug is None else _debug
-		self._transcript.debug (0xe605026e, "beginning [%s] `%s`...", _handle, _identifier)
 		
 		if _tests_stack[0] is None :
 			_statistics = self._statistics
@@ -73,8 +65,15 @@ class Execution (object) :
 		
 		_tests._statistics = _statistics
 		
+		_debug = _tests._debug if _debug is None else _debug
+		self._transcript.debug (0xe605026e, "beginning [%s] `%s`...", _handle, _identifier)
+		
+		if _skip or _tests._skip or self._hooks is not None and not self._hooks.should_execute_tests (_handle, _identifier, _tests) :
+			self._transcript.debug (0x94dc4cef, "skipping [%s] `%s`...", _handle, _identifier)
+			_skip = True
+		
 		for _test in _tests._tests :
-			self._execute (_test, _tests_stack, _identifier_stack, _debug)
+			self._execute (_test, _tests_stack, _identifier_stack, _debug, _skip)
 		
 		if _tests._statistics.succeeded :
 			self._transcript.internal (0xd6ef2184, "finished [%s] `%s`;", _handle, _identifier)
@@ -82,7 +81,7 @@ class Execution (object) :
 			self._transcript.notice (0xd5081953, "finished [%s] `%s`:  %d executed;  %d (%.0f%%) failed;  %d skipped;", _handle, _identifier, _tests._statistics.count_executed, _tests._statistics.count_failed, _tests._statistics.ratio_failed * 100, _tests._statistics.count_skipped)
 	
 	
-	def _execute_test (self, _test, _tests_stack, _identifier_stack, _debug) :
+	def _execute_test (self, _test, _tests_stack, _identifier_stack, _debug, _skip) :
 		
 		_identifier_stack = (_identifier_stack, _test.identifier)
 		_identifier = stringify_identifier (_identifier_stack)
@@ -92,7 +91,7 @@ class Execution (object) :
 			self._transcript.error (0x0472ccf3, "duplicate [%s] `%s`;  ignoring!", _handle, _identifier)
 			return
 		
-		if self._hooks is not None and not self._hooks.should_execute_test (_handle, _identifier, _test) :
+		if _skip or _test._skip or self._hooks is not None and not self._hooks.should_execute_test (_handle, _identifier, _test) :
 			self._transcript.debug (0xe3195455, "skipping [%s] `%s`...", _handle, _identifier)
 			self._update_statistics (_tests_stack, None)
 			return
