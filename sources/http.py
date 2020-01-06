@@ -468,14 +468,14 @@ class Transport (object) :
 			_connection = httplib.HTTPSConnection (
 					host = _endpoint,
 					strict = True,
-					timeout = 6,
+					timeout = 30,
 					context = _ssl,
 				)
 		else :
 			_connection = httplib.HTTPConnection (
 					host = _endpoint,
 					strict = True,
-					timeout = 6,
+					timeout = 30,
 				)
 		
 		_connection.connect ()
