@@ -11,7 +11,7 @@ import request_builders, response_enforcers
 
 
 
-def tests (identifier = None, requests = None, responses = None, debug = None, _context = None) :
+def tests (identifier = None, requests = None, responses = None, debug = None, skip = None, _context = None) :
 	
 	if _context is None :
 		_context = Context ()
@@ -22,7 +22,7 @@ def tests (identifier = None, requests = None, responses = None, debug = None, _
 	if isinstance (responses, Chainer) :
 		responses = _chainer_apply (responses, response_enforcers.responses (_context))
 	
-	_tests = Tests (_context, identifier, requests, responses, debug)
+	_tests = Tests (_context, identifier, requests, responses, debug, skip)
 	return _tests
 
 
@@ -31,7 +31,7 @@ def tests (identifier = None, requests = None, responses = None, debug = None, _
 class TestBase (object) :
 	
 	
-	def __init__ (self, _context, _identifier, _request_builder, _response_enforcer, _debug) :
+	def __init__ (self, _context, _identifier, _request_builder, _response_enforcer, _debug, _skip) :
 		
 		self._context = _context
 		self.identifier = enforce_identifier (_identifier)
@@ -57,6 +57,7 @@ class TestBase (object) :
 		self.responses = self._responses_0.forker ()
 		
 		self._debug = _debug
+		self._skip = _skip
 	
 	
 	def execute (self, _hooks = None) :
@@ -91,22 +92,22 @@ class TestBase (object) :
 class Tests (TestBase) :
 	
 	
-	def __init__ (self, _context, _identifier, _request_builder, _response_enforcer, _debug) :
-		TestBase.__init__ (self, _context, _identifier, _request_builder, _response_enforcer, _debug)
+	def __init__ (self, _context, _identifier, _request_builder, _response_enforcer, _debug, _skip) :
+		TestBase.__init__ (self, _context, _identifier, _request_builder, _response_enforcer, _debug, _skip)
 		self._tests = list ()
 	
 	
-	def fork (self, identifier = None, requests = None, responses = None, debug = None) :
+	def fork (self, identifier = None, requests = None, responses = None, debug = None, skip = None) :
 		_request_builder = self._perhaps_requests (requests)
 		_response_enforcer = self._perhaps_responses (responses)
-		_tests = Tests (self._context, identifier, _request_builder, _response_enforcer, debug)
+		_tests = Tests (self._context, identifier, _request_builder, _response_enforcer, debug, skip)
 		return self._include (_tests)
 	
 	
-	def new (self, identifier = None, requests = None, responses = None, debug = None) :
+	def new (self, identifier = None, requests = None, responses = None, debug = None, skip = None) :
 		_request_builder = self._perhaps_requests (requests)
 		_response_enforcer = self._perhaps_responses (responses)
-		_test = Test (self._context, identifier, _request_builder, _response_enforcer, debug)
+		_test = Test (self._context, identifier, _request_builder, _response_enforcer, debug, skip)
 		return self._include (_test)
 	
 	
@@ -125,8 +126,8 @@ class Tests (TestBase) :
 class Test (TestBase) :
 	
 	
-	def __init__ (self, _context, _identifier, _request_builder, _response_enforcer, _debug) :
-		TestBase.__init__ (self, _context, _identifier, _request_builder, _response_enforcer, _debug)
+	def __init__ (self, _context, _identifier, _request_builder, _response_enforcer, _debug, _skip) :
+		TestBase.__init__ (self, _context, _identifier, _request_builder, _response_enforcer, _debug, _skip)
 
 
 
