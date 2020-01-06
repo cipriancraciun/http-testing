@@ -11,8 +11,9 @@ from transcript import *
 class Execution (object) :
 	
 	
-	def __init__ (self, _context) :
+	def __init__ (self, _context, _hooks = None) :
 		self._context = _context
+		self._hooks = _hooks
 		self._transcript = transcript (self, 0x332ac851)
 		self._transport = Transport (self._context)
 		self._transactions = list ()
@@ -48,6 +49,10 @@ class Execution (object) :
 		_identifier_stack = (_identifier_stack, _tests.identifier)
 		_identifier = stringify_identifier (_identifier_stack)
 		_handle = fingerprint (_identifier_stack)
+		
+		if self._hooks is not None and not self._hooks.should_execute_tests (_handle, _identifier, _tests) :
+			self._transcript.debug (0x94dc4cef, "skipping [%s] `%s`...", _handle, _identifier)
+			return
 		
 		_debug = _tests._debug if _debug is None else _debug
 		self._transcript.debug (0xe605026e, "beginning [%s] `%s`...", _handle, _identifier)
@@ -85,22 +90,56 @@ class Execution (object) :
 			self._transcript.error (0x0472ccf3, "duplicate [%s] `%s`;  ignoring!", _handle, _identifier)
 			return
 		
+		if self._hooks is not None and not self._hooks.should_execute_test (_handle, _identifier, _test) :
+			self._transcript.debug (0xe3195455, "skipping [%s] `%s`...", _handle, _identifier)
+			return
+		
 		_debug = _test._debug if _debug is None else _debug
 		self._transcript.cut ()
 		self._transcript.info (0xe6c0c539, "executing [%s] `%s`...", _handle, _identifier)
 		
 		_session = Session ()
 		_transaction = Transaction (self._context, self._transport, _session, _test.requests, _test.responses)
+		
+		if self._hooks is not None :
+			self._hooks.before_prepare_test (_handle, _identifier, _test, _transaction)
+		
 		_transaction.prepare ()
+		
+		if self._hooks is not None :
+			self._hooks.after_prepare_test (_handle, _identifier, _test, _transaction)
+		
+		if self._hooks is not None :
+			self._hooks.before_execute_test (_handle, _identifier, _test, _transaction)
+		
 		_transaction.execute ()
+		
+		if self._hooks is not None :
+			self._hooks.after_execute_test (_handle, _identifier, _test, _transaction)
+		
+		if self._hooks is not None :
+			self._hooks.before_enforce_test (_handle, _identifier, _test, _transaction)
+		
 		_succeeded = _transaction.enforce ()
+		
+		if self._hooks is not None :
+			self._hooks.after_enforce_test (_handle, _identifier, _test, _transaction)
 		
 		self._transactions.append ((_handle, _identifier, _transaction))
 		self._transactions_by_handle[_handle] = _transaction
 		
 		if _succeeded :
+			
+			if self._hooks is not None :
+				self._hooks.succeeded_test (_handle, _identifier, _test, _transaction)
+			
 			self._transcript.debug (0x9541c9ec, "succeeded executing [%s];", _handle)
+			
 		else :
+			
+			if self._hooks is not None :
+				self._hooks.failed_test (_handle, _identifier, _test, _transaction)
+			
 			self._transcript.error (0x78f26ad5, "failed executing [%s] `%s`!", _handle, _identifier)
 		
 		if len (_transaction.annotations._records) > 0 :
@@ -267,4 +306,50 @@ class ExecutionStatistics (object) :
 		
 		self.ratio_succeeded = float (self.count_succeeded) / self.count_executed
 		self.ratio_failed = float (self.count_failed) / self.count_executed
+
+
+
+
+class ExecutionHooks (object) :
+	
+	def __init__ (self) :
+		pass
+	
+	
+	def should_execute_tests (self, _handle, _identifier, _tests) :
+		return self.should_execute (_handle)
+	
+	def should_execute_test (self, _handle, _identifier, _test) :
+		return self.should_execute (_handle)
+	
+	def should_execute (self, _handle) :
+		return True
+	
+	
+	def before_prepare_test (self, _handle, _identifier, _test, _transaction) :
+		pass
+	
+	def after_prepare_test (self, _handle, _identifier, _test, _transaction) :
+		pass
+	
+	
+	def before_execute_test (self, _handle, _identifier, _test, _transaction) :
+		pass
+	
+	def after_execute_test (self, _handle, _identifier, _test, _transaction) :
+		pass
+	
+	
+	def before_enforce_test (self, _handle, _identifier, _test, _transaction) :
+		pass
+	
+	def after_enforce_test (self, _handle, _identifier, _test, _transaction) :
+		pass
+	
+	
+	def succeeded_test (self, _handle, _identifier, _test, _transaction) :
+		pass
+	
+	def failed_test (self, _handle, _identifier, _test, _transaction) :
+		pass
 

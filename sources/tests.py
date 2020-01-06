@@ -59,8 +59,8 @@ class TestBase (object) :
 		self._debug = _debug
 	
 	
-	def execute (self) :
-		_execution = Execution (self._context)
+	def execute (self, _hooks = None) :
+		_execution = Execution (self._context, _hooks)
 		_execution.execute (self)
 		return _execution
 	
