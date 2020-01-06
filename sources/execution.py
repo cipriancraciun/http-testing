@@ -21,6 +21,7 @@ class Execution (object) :
 		self._statistics = ExecutionStatistics ()
 		self._statistics._aggregated = dict ()
 		self._debug = None
+		self._report_progress_last_count_executed = 0
 	
 	
 	def execute (self, _test, _debug = None) :
@@ -52,6 +53,7 @@ class Execution (object) :
 		
 		if self._hooks is not None and not self._hooks.should_execute_tests (_handle, _identifier, _tests) :
 			self._transcript.debug (0x94dc4cef, "skipping [%s] `%s`...", _handle, _identifier)
+			self._update_statistics (_tests_stack, None)
 			return
 		
 		_debug = _tests._debug if _debug is None else _debug
@@ -77,7 +79,7 @@ class Execution (object) :
 		if _tests._statistics.succeeded :
 			self._transcript.internal (0xd6ef2184, "finished [%s] `%s`;", _handle, _identifier)
 		else :
-			self._transcript.notice (0xd5081953, "finished [%s] `%s`:  %d executed;  %d (%.0f%%) failed;", _handle, _identifier, _tests._statistics.count_executed, _tests._statistics.count_failed, _tests._statistics.ratio_failed * 100)
+			self._transcript.notice (0xd5081953, "finished [%s] `%s`:  %d executed;  %d (%.0f%%) failed;  %d skipped;", _handle, _identifier, _tests._statistics.count_executed, _tests._statistics.count_failed, _tests._statistics.ratio_failed * 100, _tests._statistics.count_skipped)
 	
 	
 	def _execute_test (self, _test, _tests_stack, _identifier_stack, _debug) :
@@ -92,6 +94,7 @@ class Execution (object) :
 		
 		if self._hooks is not None and not self._hooks.should_execute_test (_handle, _identifier, _test) :
 			self._transcript.debug (0xe3195455, "skipping [%s] `%s`...", _handle, _identifier)
+			self._update_statistics (_tests_stack, None)
 			return
 		
 		_debug = _test._debug if _debug is None else _debug
@@ -168,19 +171,28 @@ class Execution (object) :
 	def _update_statistics (self, _tests_stack, _transaction) :
 		
 		while _tests_stack is not None :
-			_tests_stack[1]._statistics._update (_transaction)
+			if _transaction is not None :
+				_tests_stack[1]._statistics._update_executed (_transaction)
+			else :
+				_tests_stack[1]._statistics._update_skipped ()
+			
 			_tests_stack = _tests_stack[0]
 		
-		self._statistics._update (_transaction)
+		if _transaction is not None :
+			self._statistics._update_executed (_transaction)
+		else :
+			self._statistics._update_skipped ()
 	
 	
 	def _report_progress (self, _debug) :
 		
-		if not _debug and (self._statistics.count_executed % 10) != 0 or self._statistics.count_executed == 0 :
+		if not _debug and (self._statistics.count_executed % 10) != 0 or self._statistics.count_executed == self._report_progress_last_count_executed :
 			return
 		
+		self._report_progress_last_count_executed = self._statistics.count_executed
+		
 		self._transcript.cut ()
-		self._transcript.notice (0xe8e97c33, "execution progress:  %d executed;  %d (%.0f%%) failed;", self._statistics.count_executed, self._statistics.count_failed, self._statistics.ratio_failed * 100)
+		self._transcript.notice (0xe8e97c33, "execution progress:  %d executed;  %d (%.0f%%) failed;  %d skipped;", self._statistics.count_executed, self._statistics.count_failed, self._statistics.ratio_failed * 100, self._statistics.count_skipped)
 		self._transcript.cut ()
 	
 	
@@ -189,9 +201,9 @@ class Execution (object) :
 		
 		if len (self._transactions) > 0 :
 			if self._statistics.succeeded :
-				self._transcript.notice (0xd23fd5de, "execution outcome:  %d executed;  all succeeded;", self._statistics.count_executed)
+				self._transcript.notice (0xd23fd5de, "execution outcome:  %d executed;  %d skipped;  all succeeded;", self._statistics.count_executed, self._statistics.count_skipped)
 			else :
-				self._transcript.warning (0xe8e97c33, "execution outcome:  %d executed;  %d (%.0f%%) failed;", self._statistics.count_executed, self._statistics.count_failed, self._statistics.ratio_failed * 100)
+				self._transcript.warning (0xe8e97c33, "execution outcome:  %d executed;  %d (%.0f%%) failed;  %d skipped;", self._statistics.count_executed, self._statistics.count_failed, self._statistics.ratio_failed * 100, self._statistics.count_skipped)
 		else :
 			self._transcript.warning (0xc5327e15, "execution yielded no transactions!")
 		
@@ -200,13 +212,13 @@ class Execution (object) :
 			if not _only_aggregated :
 				_identifier = stringify_identifier (_statistics._identifier)
 				if _statistics.succeeded :
-					_transcript.info (0x9742017c, "`%s`:  %d executed;  all succeeded;", _identifier, _statistics.count_executed)
+					_transcript.info (0x9742017c, "`%s`:  %d executed;  %d skipped;  all succeeded;", _identifier, _statistics.count_executed, _statistics.count_skipped)
 				else :
-					_transcript.info (0x6c5fcc49, "`%s`:  %d executed;  %d (%.0f%%) failed;", _identifier, _statistics.count_executed, _statistics.count_failed, _statistics.ratio_failed * 100)
+					_transcript.info (0x6c5fcc49, "`%s`:  %d executed;  %d (%.0f%%) failed;  %d skipped;", _identifier, _statistics.count_executed, _statistics.count_failed, _statistics.ratio_failed * 100, _statistics.count_skipped)
 				_transcript = _transcript.fork ()
 			
 			for _identifier, _statistics in sorted (_statistics._aggregated.iteritems ()) :
-				if _statistics.count_executed > 0 :
+				if _statistics.count_total > 0 :
 					_report_statistics (_statistics, _transcript.fork (False))
 		
 		_report_statistics (self._statistics, self._transcript.fork (), True)
@@ -225,6 +237,7 @@ class Execution (object) :
 			_tracer_meta (0x5cfb4baa, "executed total: %d;", self._statistics.count_executed)
 			_tracer_meta (0x5c414e7e, "executed succeeded: %d (%.0f%%);", self._statistics.count_succeeded, self._statistics.ratio_succeeded * 100)
 			_tracer_meta (0x3fc6ecdc, "executed failed: %d (%.0f%%);", self._statistics.count_failed, self._statistics.ratio_failed * 100)
+			_tracer_meta (0x5cfb4baa, "skipped: %d;", self._statistics.count_skipped)
 			_tracer_meta.cut ()
 			
 			
@@ -237,13 +250,13 @@ class Execution (object) :
 				if not _only_aggregated :
 					_identifier = stringify_identifier (_statistics._identifier)
 					if _statistics.succeeded :
-						_tracer (0xcbac6bd3, "`%s`:  %d executed;  all succeeded;", _identifier, _statistics.count_executed)
+						_tracer (0xcbac6bd3, "`%s`:  %d executed;  %d skipped;  all succeeded;", _identifier, _statistics.count_executed, _statistics.count_skipped)
 					else :
-						_tracer (0xa1fc227b, "`%s`:  %d executed;  %d (%.0f%%) failed;", _identifier, _statistics.count_executed, _statistics.count_failed, _statistics.ratio_failed * 100)
+						_tracer (0xa1fc227b, "`%s`:  %d executed;  %d (%.0f%%) failed;  %d skipped;", _identifier, _statistics.count_executed, _statistics.count_failed, _statistics.ratio_failed * 100, _statistics.count_skipped)
 					_tracer = _tracer.fork ()
 				
 				for _identifier, _statistics in sorted (_statistics._aggregated.iteritems ()) :
-					if _statistics.count_executed > 0 :
+					if _statistics.count_total > 0 :
 						_report_statistics (_statistics, _tracer.fork (False))
 			
 			_report_statistics (self._statistics, _tracer_meta.fork (), True)
@@ -293,11 +306,19 @@ class ExecutionStatistics (object) :
 		self.count_executed = 0
 		self.count_succeeded = 0
 		self.count_failed = 0
+		
+		self.count_skipped = 0
+		self.count_total = 0
+		
+		self.ratio_succeeded = 0
+		self.ratio_failed = 0
 	
 	
-	def _update (self, _transaction) :
+	def _update_executed (self, _transaction) :
 		
 		self.count_executed += 1
+		self.count_total += 1
+		
 		if _transaction.succeeded :
 			self.count_succeeded += 1
 		else :
@@ -306,6 +327,12 @@ class ExecutionStatistics (object) :
 		
 		self.ratio_succeeded = float (self.count_succeeded) / self.count_executed
 		self.ratio_failed = float (self.count_failed) / self.count_executed
+	
+	
+	def _update_skipped (self) :
+		
+		self.count_skipped += 1
+		self.count_total += 1
 
 
 
