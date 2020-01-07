@@ -1,5 +1,8 @@
 
 
+import types
+
+from crypto import *
 from transcript import *
 
 
@@ -23,6 +26,7 @@ class ResponseEnforcer (object) :
 		self._extends = list ()
 		self._sanitizers = list ()
 		self._forking = False
+		self._fingerprint = None
 	
 	
 	def fork (self) :
@@ -181,22 +185,23 @@ class ResponseEnforcer (object) :
 		_enforcer_0 = _enforcer._fork_perhaps ()
 		_enforcer = self._fork_perhaps ()
 		_enforcer._extends.append (_enforcer_0)
+		_enforcer._fingerprint = None
 		return _enforcer
 	
 	
 	
 	
 	def append_enforcer (self, _callback, *_arguments_list, **_arguments_dict) :
-		_enforcer_0 = lambda _transaction : _callback (_transaction, *_arguments_list, **_arguments_dict)
 		_enforcer = self._fork_perhaps ()
-		_enforcer._enforcers.append (_enforcer_0)
+		_enforcer._enforcers.append ((_callback, _arguments_list, _arguments_dict))
+		_enforcer._fingerprint = None
 		return _enforcer
 	
 	
 	def append_sanitizer (self, _callback, *_arguments_list, **_arguments_dict) :
-		_sanitizer_0 = lambda _transaction : _callback (_transaction, *_arguments_list, **_arguments_dict)
 		_sanitizer = self._fork_perhaps ()
-		_sanitizer._sanitizers.append (_sanitizer_0)
+		_sanitizer._sanitizers.append ((_callback, _arguments_list, _arguments_dict))
+		_sanitizer._fingerprint = None
 		return _sanitizer
 	
 	
@@ -212,8 +217,8 @@ class ResponseEnforcer (object) :
 				# return _outcome
 				_failed = True
 		
-		for _enforcer in self._enforcers :
-			_outcome = _enforcer (_transaction)
+		for _callback, _arguments_list, _arguments_dict in self._enforcers :
+			_outcome = _callback (_transaction, *_arguments_list, **_arguments_dict)
 			if _outcome is not None and _outcome is not True :
 				# return _outcome
 				_failed = True
@@ -234,9 +239,54 @@ class ResponseEnforcer (object) :
 		if self._parent is not None :
 			self._parent.sanitize (_transaction)
 		
-		for _sanitizer in self._sanitizers :
-			_sanitizer (_transaction)
+		for _callback, _arguments_list, _arguments_dict in self._sanitizers :
+			_callback (_transaction, *_arguments_list, **_arguments_dict)
 		
 		for _extender in self._extends :
 			_extender.sanitize (_transaction)
+	
+	
+	
+	
+	def fingerprint (self) :
+		
+		if self._fingerprint is not None :
+			return self._fingerprint
+		
+		_fingerprint = list ()
+		
+		if self._parent is not None :
+			_fingerprint.append (self._parent.fingerprint ())
+		else :
+			_fingerprint.append (None)
+		
+		_fingerprint.append ("d5cc4339aaf0d7967bc5e3a8ed946dea")
+		for _callback, _arguments_list, _arguments_dict in self._enforcers :
+			if isinstance (_callback, types.MethodType) :
+				if _callback.im_class is ResponseEnforcer :
+					pass
+				else :
+					raise Exception (0xccce4078)
+			else :
+				raise Exception (0xfc8ecef2)
+			_fingerprint.append ((_callback.__name__, _arguments_list, _arguments_dict))
+		
+		_fingerprint.append ("81d3e06596994ebb64198741bfe335c3")
+		for _callback, _arguments_list, _arguments_dict in self._sanitizers :
+			if isinstance (_callback, types.MethodType) :
+				if _callback.im_class is ResponseEnforcer :
+					pass
+				else :
+					raise Exception (0x2cb84554)
+			else :
+				raise Exception (0xc3b02aa9)
+			_fingerprint.append ((_callback.__name__, _arguments_list, _arguments_dict))
+		
+		_fingerprint.append ("d23e5e3ca25c07d1fd1ef72f849e4e54")
+		for _extender in self._extends :
+			_fingerprint.append (_extender.fingerprint ())
+		
+		self._fingerprint = fingerprint (_fingerprint)
+		
+		return self._fingerprint
 
