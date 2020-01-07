@@ -61,8 +61,8 @@ class TestBase (object) :
 	
 	
 	def execute (self, _hooks = None) :
-		_execution = Execution (self._context, _hooks)
-		_execution.execute (self)
+		_executor = Executor (self._context, _hooks)
+		_execution = _executor.execute (self)
 		return _execution
 	
 	

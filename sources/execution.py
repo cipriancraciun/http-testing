@@ -8,7 +8,7 @@ from transcript import *
 
 
 
-class Execution (object) :
+class Executor (object) :
 	
 	
 	def __init__ (self, _context, _hooks = None) :
@@ -16,35 +16,39 @@ class Execution (object) :
 		self._hooks = _hooks
 		self._transcript = transcript (self, 0x332ac851)
 		self._transport = Transport (self._context)
-		self._transactions = list ()
-		self._transactions_by_handle = dict ()
-		self._statistics = ExecutionStatistics ()
-		self._statistics._aggregated = dict ()
 		self._debug = None
-		self._report_progress_last_count_executed = 0
 	
 	
 	def execute (self, _test, _debug = None) :
+		
+		_debug = self._debug if _debug is None else _debug
+		
+		_plan = ExecutionPlan (_debug)
+		
 		self._transcript.cut ()
 		self._transcript.internal (0x91657e21, "executing...")
-		_debug = self._debug if _debug is None else _debug
-		self._execute (_test, None, None, self._debug, False)
+		
+		self._execute (_plan, _test, None, None, None, False)
+		
 		self._transcript.internal (0x310eac5e, "executed;")
 		self._transcript.cut ()
-		self._report_execution (_debug)
+		
+		_plan._report_execution ()
+		
+		return _plan
 	
 	
-	def _execute (self, _test, _tests_stack, _identifier_stack, _debug, _skip) :
+	def _execute (self, _plan, _test, _tests_stack, _identifier_stack, _debug, _skip) :
 		if isinstance (_test, tests.Test) :
-			self._execute_test (_test, _tests_stack, _identifier_stack, _debug, _skip)
+			self._execute_test (_plan, _test, _tests_stack, _identifier_stack, _debug, _skip)
 		elif isinstance (_test, tests.Tests) :
-			self._execute_tests (_test, _tests_stack, _identifier_stack, _debug, _skip)
+			self._execute_tests (_plan, _test, _tests_stack, _identifier_stack, _debug, _skip)
 		else :
 			raise Exception (0xbe83caa9)
-		self._report_progress (_debug)
+		_plan._report_progress ()
 	
 	
-	def _execute_tests (self, _tests, _tests_stack, _identifier_stack, _debug, _skip) :
+	def _execute_tests (self, _plan, _tests, _tests_stack, _identifier_stack, _debug, _skip) :
 		
 		_tests_stack = (_tests_stack, _tests)
 		_identifier_stack = (_identifier_stack, _tests.identifier)
@@ -52,7 +56,7 @@ class Execution (object) :
 		_handle = fingerprint (_identifier_stack)
 		
 		if _tests_stack[0] is None :
-			_statistics = self._statistics
+			_statistics = _plan._statistics
 		else :
 			_statistics = _tests_stack[0][1]._statistics
 		if _tests.identifier in _statistics._aggregated :
@@ -73,7 +77,7 @@ class Execution (object) :
 			_skip = True
 		
 		for _test in _tests._tests :
-			self._execute (_test, _tests_stack, _identifier_stack, _debug, _skip)
+			self._execute (_plan, _test, _tests_stack, _identifier_stack, _debug, _skip)
 		
 		if _tests._statistics.succeeded :
 			self._transcript.internal (0xd6ef2184, "finished [%s] `%s`;", _handle, _identifier)
@@ -81,20 +85,20 @@ class Execution (object) :
 			self._transcript.notice (0xd5081953, "finished [%s] `%s`:  %d executed;  %d (%.0f%%) failed;  %d skipped;", _handle, _identifier, _tests._statistics.count_executed, _tests._statistics.count_failed, _tests._statistics.ratio_failed * 100, _tests._statistics.count_skipped)
 	
 	
-	def _execute_test (self, _test, _tests_stack, _identifier_stack, _debug, _skip) :
+	def _execute_test (self, _plan, _test, _tests_stack, _identifier_stack, _debug, _skip) :
 		
 		_identifier_stack = (_identifier_stack, _test.identifier)
 		_identifier = stringify_identifier (_identifier_stack)
 		_enforcer_handle = _test.responses.fingerprint ()
 		_handle = fingerprint ((_identifier_stack, _enforcer_handle))
 		
-		if _handle in self._transactions_by_handle :
+		if _handle in _plan._transactions_by_handle :
 			self._transcript.error (0x0472ccf3, "duplicate [%s] `%s`;  ignoring!", _handle, _identifier)
 			return
 		
 		if _skip or _test._skip or self._hooks is not None and not self._hooks.should_execute_test (_handle, _identifier, _test) :
 			self._transcript.debug (0xe3195455, "skipping [%s] `%s`...", _handle, _identifier)
-			self._update_statistics (_tests_stack, None)
+			_plan._update_statistics (_tests_stack, None)
 			return
 		
 		_debug = _test._debug if _debug is None else _debug
@@ -128,8 +132,8 @@ class Execution (object) :
 		if self._hooks is not None :
 			self._hooks.after_enforce_test (_handle, _identifier, _test, _transaction)
 		
-		self._transactions.append ((_identifier, _transaction, _handle, _enforcer_handle))
-		self._transactions_by_handle[_handle] = _transaction
+		_plan._transactions.append ((_identifier, _transaction, _handle, _enforcer_handle))
+		_plan._transactions_by_handle[_handle] = _transaction
 		
 		if _succeeded :
 			
@@ -165,7 +169,29 @@ class Execution (object) :
 		self._transcript.internal (0x4b83e138, "executed [%s];", _handle)
 		self._transcript.cut ()
 		
-		self._update_statistics (_tests_stack, _transaction)
+		_plan._update_statistics (_tests_stack, _transaction)
+
+
+
+
+class ExecutionTask (object) :
+	
+	def __init__ (self) :
+		pass
+
+
+
+
+class ExecutionPlan (object) :
+	
+	def __init__ (self, _debug) :
+		self._transcript = transcript (self, 0xcc4f6cd1)
+		self._transactions = list ()
+		self._transactions_by_handle = dict ()
+		self._statistics = ExecutionStatistics ()
+		self._statistics._aggregated = dict ()
+		self._debug = _debug
+		self._report_progress_last_count_executed = 0
 	
 	
 	def _update_statistics (self, _tests_stack, _transaction) :
@@ -184,9 +210,9 @@ class Execution (object) :
 			self._statistics._update_skipped ()
 	
 	
-	def _report_progress (self, _debug) :
+	def _report_progress (self) :
 		
-		if not _debug and (self._statistics.count_executed % 10) != 0 or self._statistics.count_executed == self._report_progress_last_count_executed :
+		if not self._debug and (self._statistics.count_executed % 10) != 0 or self._statistics.count_executed == self._report_progress_last_count_executed :
 			return
 		
 		self._report_progress_last_count_executed = self._statistics.count_executed
@@ -196,7 +222,7 @@ class Execution (object) :
 		self._transcript.cut ()
 	
 	
-	def _report_execution (self, _debug) :
+	def _report_execution (self) :
 		self._transcript.cut ()
 		
 		if len (self._transactions) > 0 :
