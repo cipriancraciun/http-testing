@@ -236,6 +236,12 @@ class ResponseEnforcer (object) :
 	
 	def sanitize (self, _transaction) :
 		
+		self._sanitize_0 (_transaction)
+		_transaction.response._set_fingerprint ()
+	
+	
+	def _sanitize_0 (self, _transaction) :
+		
 		if self._parent is not None :
 			self._parent.sanitize (_transaction)
 		
@@ -243,7 +249,7 @@ class ResponseEnforcer (object) :
 			_callback (_transaction, *_arguments_list, **_arguments_dict)
 		
 		for _extender in self._extends :
-			_extender.sanitize (_transaction)
+			_extender._sanitize_0 (_transaction)
 	
 	
 	
