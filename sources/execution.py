@@ -128,7 +128,7 @@ class Execution (object) :
 		if self._hooks is not None :
 			self._hooks.after_enforce_test (_handle, _identifier, _test, _transaction)
 		
-		self._transactions.append ((_handle, _identifier, _transaction, _enforcer_handle))
+		self._transactions.append ((_identifier, _transaction, _handle, _enforcer_handle))
 		self._transactions_by_handle[_handle] = _transaction
 		
 		if _succeeded :
@@ -263,7 +263,7 @@ class Execution (object) :
 			_tracer_meta.cut ()
 			
 			
-			for _handle, _identifier, _transaction, _enforcer_handle in sorted (self._transactions) :
+			for _identifier, _transaction, _handle, _enforcer_handle in sorted (self._transactions) :
 				_succeeded = _transaction.succeeded
 				_tracer.cut ()
 				if not _succeeded :
