@@ -38,6 +38,7 @@ def _fingerprint_0 (_hasher, _value) :
 			_hasher.update ("list")
 		elif isinstance (_value, set) :
 			_hasher.update ("set")
+			_value = sorted (_value)
 		else :
 			raise Exception (0xfc11cc66)
 		
@@ -57,4 +58,31 @@ def _fingerprint_0 (_hasher, _value) :
 		
 	else :
 		raise Exception ((0x7f3881aa, _value))
+
+
+
+
+def hash_md5 (_value) :
+	_hasher = md5.new ()
+	_hash_0 (_hasher, _value)
+	_hash = _hasher.digest ()
+	_hash = _hash.encode ("hex")
+	return _hash
+
+
+def _hash_0 (_hasher, _value) :
+	
+	if _value is None :
+		pass
+		
+	elif isinstance (_value, basestring) :
+		_hasher.update (_value)
+		
+	elif isinstance (_value, tuple) or isinstance (_value, list) :
+		
+		for _value in _value :
+			_hash_0 (_hasher, _value)
+		
+	else :
+		raise Exception ((0x23a8d044, _value))
 
