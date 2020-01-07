@@ -85,7 +85,8 @@ class Execution (object) :
 		
 		_identifier_stack = (_identifier_stack, _test.identifier)
 		_identifier = stringify_identifier (_identifier_stack)
-		_handle = fingerprint (_identifier_stack)
+		_enforcer_handle = _test.responses.fingerprint ()
+		_handle = fingerprint ((_identifier_stack, _enforcer_handle))
 		
 		if _handle in self._transactions_by_handle :
 			self._transcript.error (0x0472ccf3, "duplicate [%s] `%s`;  ignoring!", _handle, _identifier)
@@ -127,7 +128,7 @@ class Execution (object) :
 		if self._hooks is not None :
 			self._hooks.after_enforce_test (_handle, _identifier, _test, _transaction)
 		
-		self._transactions.append ((_handle, _identifier, _transaction))
+		self._transactions.append ((_handle, _identifier, _transaction, _enforcer_handle))
 		self._transactions_by_handle[_handle] = _transaction
 		
 		if _succeeded :
@@ -262,7 +263,7 @@ class Execution (object) :
 			_tracer_meta.cut ()
 			
 			
-			for _identifier, _handle, _transaction in sorted (self._transactions) :
+			for _handle, _identifier, _transaction, _enforcer_handle in sorted (self._transactions) :
 				_succeeded = _transaction.succeeded
 				_tracer.cut ()
 				if not _succeeded :
@@ -278,6 +279,7 @@ class Execution (object) :
 					_tracer_meta (0x2264995e, "outcome: failed;")
 				_tracer_meta (0x2d836357, "identifier: `%s`;", _identifier)
 				_tracer_meta (0xdb41b7d9, "handle: `%s`;", _handle)
+				_tracer_meta (0xf802fd92, "enforcer: `%s`;", _enforcer_handle)
 				_tracer_meta.indent (-1)
 				_transaction._trace (_tracer_meta, True)
 				if not _succeeded :
