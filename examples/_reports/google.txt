@@ -5,22 +5,24 @@
 [5cfb4baa]      executed total: 3;
 [5c414e7e]      executed succeeded: 2 (67%);
 [3fc6ecdc]      executed failed: 1 (33%);
+[5cfb4baa]      skipped: 0;
 
             ------------------------------------------------------------
 
 [84cb7e16]  ## tests:
-[a1fc227b]      `google`:  3 executed;  1 (33%) failed;
+[a1fc227b]      `google`:  3 executed;  1 (33%) failed;  0 skipped;
 
             ------------------------------------------------------------
 
 [c0a5f644]  ## transaction:
 [67181c6a]      * meta:
 [3191db36]          outcome: succeeded;
-[2d836357]          identifier: `205342cc748cb4315abbbdfe6d6c3725`;
-[db41b7d9]          handle: `google -- apex-to-www-redirect`;
+[2d836357]          identifier: `google -- apex-to-www-redirect`;
+[db41b7d9]          handle: `cfd62f23df67c8ac69357633ad83201e`;
+[f802fd92]          enforcer: `f742142c5cf5ff62e9656e7af7dc78a6`;
 [08574ba6]      * annotations:
 [cb6c9a7b]          [dd] [47061c22]  header `server`:  matched expected, `gws`;
-[cb6c9a7b]          [dd] [cb6a7efc]  header `date`:  matched present, `Tue, 24 Dec 2019 11:20:55 GMT`;
+[cb6c9a7b]          [dd] [cb6a7efc]  header `date`:  matched present, `Tue, 07 Jan 2020 20:18:26 GMT`;
 [cb6c9a7b]          [dd] [cb6a7efc]  header `alt-svc`:  matched present, `quic=":443"; ma=2592000; v="46,43",h3-Q050=":443"; ma=2592000,h3-Q049=":443"; ma=2592000,h3-Q048=":443"; ma=2592000,h3-Q046=":443"; ma=2592000,h3-Q043=":443"; ma=2592000`;
 [cb6c9a7b]          [dd] [09058571]  status code:  matched in set, `301`;
 [cb6c9a7b]          [dd] [47061c22]  header `Location`:  matched expected, `https://www.google.com/`;
@@ -31,6 +33,8 @@
 [763804da]          query: none;
 [4ed6a4ee]          headers: none;
 [a41d4441]          body: none;
+[bb66c295]          server endpoint: `www3.l.google.com:443`;  tls: `True`;
+[2fa37fce]          fingerprint: `99432e0626302a17541280d4bf3f11de`;
 [80d7ba56]      * response:
 [eaa6ad21]          status code: `301`;
 [87ca843d]          status version: `1.1`;
@@ -39,52 +43,14 @@
 [78ba5bbe]          header `cache-control`: `public, max-age=2592000`;
 [78ba5bbe]          header `content-length`: `220`;
 [78ba5bbe]          header `content-type`: `text/html; charset=UTF-8`;
-[78ba5bbe]          header `date`: `{...}`;
-[78ba5bbe]          header `expires`: `{...}`;
+[78ba5bbe]          header `date`: `Tue, 07 Jan 2020 20:18:26 GMT`;
+[78ba5bbe]          header `expires`: `Thu, 06 Feb 2020 20:18:26 GMT`;
 [78ba5bbe]          header `location`: `https://www.google.com/`;
 [78ba5bbe]          header `server`: `gws`;
 [78ba5bbe]          header `x-frame-options`: `SAMEORIGIN`;
 [78ba5bbe]          header `x-xss-protection`: `0`;
-[fea4219c]          body: `220` bytes;
-
-            ------------------------------------------------------------
-
-[c0a5f644]  ## transaction:
-[67181c6a]      * meta:
-[3191db36]          outcome: succeeded;
-[2d836357]          identifier: `93570904feb7db2f27a9a05bd71dda17`;
-[db41b7d9]          handle: `google -- www-get-/`;
-[08574ba6]      * annotations:
-[cb6c9a7b]          [dd] [47061c22]  header `server`:  matched expected, `gws`;
-[cb6c9a7b]          [dd] [cb6a7efc]  header `date`:  matched present, `Tue, 24 Dec 2019 11:20:55 GMT`;
-[cb6c9a7b]          [dd] [cb6a7efc]  header `alt-svc`:  matched present, `quic=":443"; ma=2592000; v="46,43",h3-Q050=":443"; ma=2592000,h3-Q049=":443"; ma=2592000,h3-Q048=":443"; ma=2592000,h3-Q046=":443"; ma=2592000,h3-Q043=":443"; ma=2592000`;
-[cb6c9a7b]          [dd] [bb548cd6]  status code:  matched expected, `200`;
-[cb6c9a7b]          [dd] [997fdd5b]  body:  matched present, `48741` bytes;
-[a21095ed]      * request:
-[7fc84f53]          host: `www.google.com`;
-[2ec04778]          method: `GET`;
-[aa0d0b82]          path: `/`;
-[763804da]          query: none;
-[4ed6a4ee]          headers: none;
-[a41d4441]          body: none;
-[80d7ba56]      * response:
-[eaa6ad21]          status code: `200`;
-[87ca843d]          status version: `1.1`;
-[8820e5f1]          status message: `OK`;
-[78ba5bbe]          header `accept-ranges`: `none`;
-[78ba5bbe]          header `alt-svc`: `quic=":443"; ma=2592000; v="46,43",h3-Q050=":443"; ma=2592000,h3-Q049=":443"; ma=2592000,h3-Q048=":443"; ma=2592000,h3-Q046=":443"; ma=2592000,h3-Q043=":443"; ma=2592000`;
-[78ba5bbe]          header `cache-control`: `private, max-age=0`;
-[78ba5bbe]          header `content-type`: `text/html; charset=ISO-8859-1`;
-[78ba5bbe]          header `date`: `{...}`;
-[78ba5bbe]          header `expires`: `{...}`;
-[78ba5bbe]          header `p3p`: `CP="This is not a P3P policy! See g.co/p3phelp for more info."`;
-[78ba5bbe]          header `server`: `gws`;
-[78ba5bbe]          header `set-cookie`: `1P_JAR=2019-12-24-11; expires=Thu, 23-Jan-2020 11:20:55 GMT; path=/; domain=.google.com, NID=194=eY9dy5z9EU96fJX7eP3TUQkopmTqC9aXH0QKvet2VnPUkdJGALMb8LztEgszw32BuvVcQhj8KiIL1XSgbl_e1rcW4D3DBUHZJqrRE5rybFkalc-wWTQ1bu-ON163X7Gog8vE9LIUi2udg7yaAsmxUFnUi_mXTOPBj0mlcOzmr54; expires=Wed, 24-Jun-2020 11:20:55 GMT; path=/; domain=.google.com; HttpOnly`;
-[78ba5bbe]          header `transfer-encoding`: `chunked`;
-[78ba5bbe]          header `vary`: `Accept-Encoding`;
-[78ba5bbe]          header `x-frame-options`: `SAMEORIGIN`;
-[78ba5bbe]          header `x-xss-protection`: `0`;
-[fea4219c]          body: `48741` bytes;
+[fea4219c]          body: `220` bytes;  md5: `276bbb20c29087e88db63899fd8f9129`;
+[7bf3732b]          fingerprint: `3852274d092bc475572930434c7edede`;
 
             ------------------------------------------------------------
 
@@ -92,11 +58,12 @@
 [c0a5f644]  ## transaction:
 [67181c6a]      * meta:
 [2264995e]          outcome: failed;
-[2d836357]          identifier: `ecb0ff8bdab1b73a26fa7c84e7dd9df6`;
-[db41b7d9]          handle: `google -- fail`;
+[2d836357]          identifier: `google -- fail`;
+[db41b7d9]          handle: `1d6bb8f4eca6f2e797dab4a59229f034`;
+[f802fd92]          enforcer: `8ffb4ab4cb260353bda8696c5c4b3b33`;
 [08574ba6]      * annotations:
 [cb6c9a7b]          [ww] [6a5c7a4f]  header `server`:  expected `gws`, received none!
-[cb6c9a7b]          [dd] [cb6a7efc]  header `date`:  matched present, `Tue, 24 Dec 2019 11:20:56 GMT`;
+[cb6c9a7b]          [dd] [cb6a7efc]  header `date`:  matched present, `Tue, 07 Jan 2020 20:18:26 GMT`;
 [cb6c9a7b]          [dd] [cb6a7efc]  header `alt-svc`:  matched present, `quic=":443"; ma=2592000; v="46,43",h3-Q050=":443"; ma=2592000,h3-Q049=":443"; ma=2592000,h3-Q048=":443"; ma=2592000,h3-Q046=":443"; ma=2592000,h3-Q043=":443"; ma=2592000`;
 [cb6c9a7b]          [ww] [79b1b50d]  status code:  expected `200`,  received `404`!
 [cb6c9a7b]          [dd] [997fdd5b]  body:  matched present, `1561` bytes;
@@ -107,6 +74,8 @@
 [763804da]          query: none;
 [4ed6a4ee]          headers: none;
 [a41d4441]          body: none;
+[bb66c295]          server endpoint: `www3.l.google.com:443`;  tls: `True`;
+[2fa37fce]          fingerprint: `f57b8d3656a0d4bb7092b335b42cf72d`;
 [80d7ba56]      * response:
 [eaa6ad21]          status code: `404`;
 [87ca843d]          status version: `1.1`;
@@ -114,10 +83,54 @@
 [78ba5bbe]          header `alt-svc`: `quic=":443"; ma=2592000; v="46,43",h3-Q050=":443"; ma=2592000,h3-Q049=":443"; ma=2592000,h3-Q048=":443"; ma=2592000,h3-Q046=":443"; ma=2592000,h3-Q043=":443"; ma=2592000`;
 [78ba5bbe]          header `content-length`: `1561`;
 [78ba5bbe]          header `content-type`: `text/html; charset=UTF-8`;
-[78ba5bbe]          header `date`: `{...}`;
+[78ba5bbe]          header `date`: `Tue, 07 Jan 2020 20:18:26 GMT`;
 [78ba5bbe]          header `referrer-policy`: `no-referrer`;
-[fea4219c]          body: `1561` bytes;
+[fea4219c]          body: `1561` bytes;  md5: `b81150861bf911f947660cf73bce77f6`;
+[7bf3732b]          fingerprint: `5f5ce1f10abc7a704d9c4cde2d5d4682`;
 [14aaf57d]  !!!! FAILED !!!!
+
+            ------------------------------------------------------------
+
+[c0a5f644]  ## transaction:
+[67181c6a]      * meta:
+[3191db36]          outcome: succeeded;
+[2d836357]          identifier: `google -- www-get-/`;
+[db41b7d9]          handle: `4a6deab77463bd8fa10112f50842037f`;
+[f802fd92]          enforcer: `8ffb4ab4cb260353bda8696c5c4b3b33`;
+[08574ba6]      * annotations:
+[cb6c9a7b]          [dd] [47061c22]  header `server`:  matched expected, `gws`;
+[cb6c9a7b]          [dd] [cb6a7efc]  header `date`:  matched present, `Tue, 07 Jan 2020 20:18:26 GMT`;
+[cb6c9a7b]          [dd] [cb6a7efc]  header `alt-svc`:  matched present, `quic=":443"; ma=2592000; v="46,43",h3-Q050=":443"; ma=2592000,h3-Q049=":443"; ma=2592000,h3-Q048=":443"; ma=2592000,h3-Q046=":443"; ma=2592000,h3-Q043=":443"; ma=2592000`;
+[cb6c9a7b]          [dd] [bb548cd6]  status code:  matched expected, `200`;
+[cb6c9a7b]          [dd] [997fdd5b]  body:  matched present, `47393` bytes;
+[a21095ed]      * request:
+[7fc84f53]          host: `www.google.com`;
+[2ec04778]          method: `GET`;
+[aa0d0b82]          path: `/`;
+[763804da]          query: none;
+[4ed6a4ee]          headers: none;
+[a41d4441]          body: none;
+[bb66c295]          server endpoint: `www3.l.google.com:443`;  tls: `True`;
+[2fa37fce]          fingerprint: `5bbed0ff33b7489d23a6a53622793b00`;
+[80d7ba56]      * response:
+[eaa6ad21]          status code: `200`;
+[87ca843d]          status version: `1.1`;
+[8820e5f1]          status message: `OK`;
+[78ba5bbe]          header `accept-ranges`: `none`;
+[78ba5bbe]          header `alt-svc`: `quic=":443"; ma=2592000; v="46,43",h3-Q050=":443"; ma=2592000,h3-Q049=":443"; ma=2592000,h3-Q048=":443"; ma=2592000,h3-Q046=":443"; ma=2592000,h3-Q043=":443"; ma=2592000`;
+[78ba5bbe]          header `cache-control`: `private, max-age=0`;
+[78ba5bbe]          header `content-type`: `text/html; charset=ISO-8859-1`;
+[78ba5bbe]          header `date`: `Tue, 07 Jan 2020 20:18:26 GMT`;
+[78ba5bbe]          header `expires`: `-1`;
+[78ba5bbe]          header `p3p`: `CP="This is not a P3P policy! See g.co/p3phelp for more info."`;
+[78ba5bbe]          header `server`: `gws`;
+[78ba5bbe]          header `set-cookie`: `1P_JAR=2020-01-07-20; expires=Thu, 06-Feb-2020 20:18:26 GMT; path=/; domain=.google.com; Secure, NID=195=ola45WpHkeUoWnOHcvTSJXq7gaV-UuzA4devv3NB2l-2-3kaBAiULn9tQorQx1-pjMxzjIBB7owxb6_UhBo01Ms_pF_DuZEb9R3uvkDOiaeW3jn0K3JmZXsR8D7YPQ5vwYLBVcbT8sXBIHYn9uqg9LuPdHfKzuOzSlVSFSjas38; expires=Wed, 08-Jul-2020 20:18:26 GMT; path=/; domain=.google.com; HttpOnly`;
+[78ba5bbe]          header `transfer-encoding`: `chunked`;
+[78ba5bbe]          header `vary`: `Accept-Encoding`;
+[78ba5bbe]          header `x-frame-options`: `SAMEORIGIN`;
+[78ba5bbe]          header `x-xss-protection`: `0`;
+[fea4219c]          body: `47393` bytes;  md5: `f8b3f2ec6ff757ea18345d13400e7059`;
+[7bf3732b]          fingerprint: `20421eca7e7707f34386204c047f50ce`;
 
             ------------------------------------------------------------
 

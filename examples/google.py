@@ -10,9 +10,7 @@ _tests = tests (
 		responses = chain
 				.has_header ("server", "gws")
 				.has_header ("date")
-				.has_header ("alt-svc")
-				.sanitize_header ("date")
-				.sanitize_header ("expires"),
+				.has_header ("alt-svc"),
 		debug = False,
 	)
 
