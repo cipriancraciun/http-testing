@@ -6,6 +6,7 @@ import urllib
 import time
 
 
+from crypto import *
 from request_builders import *
 from response_enforcers import *
 from tools import *
@@ -26,6 +27,7 @@ class Request (object) :
 		self.body = _body
 		self._normalize ()
 		self._set_endpoint (_endpoint)
+		self._set_fingerprint ()
 	
 	
 	def _normalize (self) :
@@ -87,6 +89,8 @@ class Request (object) :
 	
 	def _normalize_body (self) :
 		self.body = normalize_string (self.body)
+		self.body_size = len (self.body) if self.body is not None else 0
+		self.body_md5 = hash_md5 (self.body)
 	
 	
 	def _set_endpoint (self, _endpoint) :
@@ -112,6 +116,20 @@ class Request (object) :
 		
 		if self.server_endpoint is None :
 			raise Exception (0x0ffef94e)
+	
+	
+	def _set_fingerprint (self) :
+		self.fingerprint = fingerprint ((
+				"f40903d40bee0f61efb02251b875fa6f",
+				self.server_endpoint,
+				self.server_tls,
+				self.host,
+				self.method,
+				self.path,
+				self.query,
+				self.headers,
+				self.body_md5,
+			))
 	
 	
 	def _trace (self, _tracer) :
@@ -143,9 +161,15 @@ class Request (object) :
 			_tracer (0x4ed6a4ee, "headers: none;")
 		
 		if self.body is not None :
-			_tracer (0xbb5141bf, "body: `%d` bytes;", len (self.body))
+			_tracer (0xbb5141bf, "body: `%d` bytes;  md5: `%s`;", self.body_size, self.body_md5)
 		else :
 			_tracer (0xa41d4441, "body: none;")
+		
+		if self.server_endpoint is not None :
+			_tracer (0xbb66c295, "server endpoint: `%s`;  tls: `%s`;", self.server_endpoint, self.server_tls)
+		
+		if self.fingerprint is not None :
+			_tracer (0x2fa37fce, "fingerprint: `%s`;", self.fingerprint)
 
 
 
@@ -160,6 +184,7 @@ class Response (object) :
 		self.headers = _headers
 		self.body = _body
 		self._normalize ()
+		self._set_fingerprint ()
 	
 	
 	def _normalize (self) :
@@ -177,7 +202,18 @@ class Response (object) :
 		self.headers_0 = multi_map_to_dict (self.headers, normalize_string_lower, None, None, None)
 		
 		self.body = normalize_string (self.body)
+		self.body_size = len (self.body) if self.body is not None else 0
+		self.body_md5 = hash_md5 (self.body)
 	
+	
+	def _set_fingerprint (self) :
+		self.fingerprint = fingerprint ((
+				"314247a38774af77e4ac369f1ccface1",
+				self.status_code,
+				self.status_message,
+				self.headers,
+				self.body,
+			))
 	
 	def _trace (self, _tracer) :
 		
@@ -203,9 +239,12 @@ class Response (object) :
 			_tracer (0x0e792726, "headers: none;")
 		
 		if self.body is not None :
-			_tracer (0xfea4219c, "body: `%d` bytes;", len (self.body))
+			_tracer (0xfea4219c, "body: `%d` bytes;  md5: `%s`;", self.body_size, self.body_md5)
 		else :
 			_tracer (0xe800f587, "body: none;")
+		
+		if self.fingerprint is not None :
+			_tracer (0x7bf3732b, "fingerprint: `%s`;", self.fingerprint)
 
 
 
