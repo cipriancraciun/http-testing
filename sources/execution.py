@@ -14,29 +14,41 @@ from transcript import *
 class Executor (object) :
 	
 	
-	def __init__ (self, _context, _hooks = None) :
+	def __init__ (self, _context, _transport = None, _hooks = None, _parallelism = None, _debug = None) :
+		
+		if _transport is None :
+			_transport = Transport (_context)
+		
 		self._context = _context
+		self._transport = _transport
 		self._hooks = _hooks
+		self._parallelism = _parallelism
+		self._debug = _debug
+		
 		self._transcript = transcript (self, 0x332ac851)
-		self._transport = Transport (self._context)
-		self._debug = None
 	
 	
-	def execute (self, _test, _parallelism = None, _debug = None) :
+	def execute (self, _test) :
 		
-		_debug = self._debug if _debug is None else _debug
-		
-		_plan = ExecutionPlan (_debug)
+		_plan = ExecutionPlan (self._context, self._transport, self._hooks, self._parallelism, self._debug)
 		
 		self._transcript.cut ()
 		self._transcript.notice (0x8d8c3f01, "planning...")
-		self._plan (_plan, _test, None, None, None, False)
+		
+		self._plan (_plan, _test, None, None, _plan._debug, False)
+		
+		_plan._tasks = list ()
+		for _identifier, _task in sorted (_plan._tasks_by_identifier.iteritems ()) :
+			_plan._tasks.append (_task)
+		
 		self._transcript.debug (0xa4b3290e, "planned;")
 		self._transcript.cut ()
 		
 		self._transcript.cut ()
 		self._transcript.debug (0x91657e21, "executing...")
-		self._execute_plan (_plan, _parallelism)
+		
+		self._execute_plan (_plan)
+		
 		self._transcript.debug (0x310eac5e, "executed;")
 		self._transcript.cut ()
 		
@@ -75,9 +87,10 @@ class Executor (object) :
 		_statistics_stack = (_statistics_stack, _statistics)
 		
 		_debug = _tests._debug if _debug is None else _debug
+		
 		self._transcript.debug (0xe605026e, "planning [%s] `%s`...", _handle, _identifier)
 		
-		if _skip or _tests._skip or self._hooks is not None and not self._hooks.should_execute_tests (_handle, _identifier, _tests) :
+		if _skip or _tests._skip or _plan._hooks is not None and not _plan._hooks.should_execute_tests (_handle, _identifier, _tests) :
 			self._transcript.debug (0x94dc4cef, "skipping [%s] `%s`...", _handle, _identifier)
 			_skip = True
 		
@@ -94,67 +107,52 @@ class Executor (object) :
 		_enforcer_handle = _test.responses.fingerprint ()
 		_handle = fingerprint ((_identifier_stack, _enforcer_handle))
 		
+		_debug = _test._debug if _debug is None else _debug
+		
 		if _handle in _plan._tasks_by_handle :
 			self._transcript.warning (0x0472ccf3, "duplicate [%s] `%s`;  ignoring!", _handle, _identifier)
 			return
 		
-		if _skip or _test._skip or self._hooks is not None and not self._hooks.should_execute_test (_handle, _identifier, _test) :
+		if _skip or _test._skip or _plan._hooks is not None and not _plan._hooks.should_execute_test (_handle, _identifier, _test) :
 			self._transcript.debug (0xe3195455, "skipping [%s] `%s`...", _handle, _identifier)
 			self._update_statistics (_statistics_stack, False)
 			return
 		
-		_debug = _test._debug if _debug is None else _debug
-		
 		_session = Session ()
-		_transaction = Transaction (self._context, self._transport, _session, _test.requests, _test.responses)
+		_transaction = Transaction (_plan._context, _plan._transport, _session, _test.requests, _test.responses)
 		_task = ExecutionTask (_handle, _identifier, _test, _transaction, _enforcer_handle, _statistics_stack, _debug)
 		
 		_plan._enqueue_task (_task)
 		self._update_statistics (_statistics_stack, True)
 	
 	
-	def _execute_plan (self, _plan, _parallelism) :
+	def _execute_plan (self, _plan) :
 		
-		if _parallelism is None :
-			_parallelism = True
-		
-		if _parallelism is False :
-			_parallelism = 1
-		elif _parallelism is True :
-			_parallelism = 64
-		elif isinstance (_parallelism, int) and _parallelism >= 1 :
-			pass
-		else :
-			raise Exception (0xf248be6c)
-		
-		_tasks = list ()
-		for _identifier, _task in sorted (_plan._tasks_by_identifier.iteritems ()) :
-			_tasks.append (_task)
-		
-		if len (_tasks) > 0 :
-			if _parallelism > 1 :
-				self._execute_plan_parallelized (_plan, _tasks, _parallelism)
+		if len (_plan._tasks) > 0 :
+			if _plan._parallelism > 1 :
+				self._execute_plan_parallelized (_plan)
 			else :
-				self._execute_plan_sequentially (_plan, _tasks)
+				self._execute_plan_sequentially (_plan)
 	
 	
-	def _execute_plan_sequentially (self, _plan, _tasks) :
+	def _execute_plan_sequentially (self, _plan) :
 		
 		self._transcript.notice (0xa32bd88a, "executing sequentially...")
 		
-		for _task in _tasks :
+		for _task in _plan._tasks :
 			
-			self._execute_task_before (_task._handle, _task._identifier, _task._transaction, _task._test, _task._debug)
-			self._execute_task_actual (_task._handle, _task._identifier, _task._transaction, _task._test, _task._debug)
-			self._execute_task_after (_task._handle, _task._identifier, _task._transaction, _task._test, _task._debug)
+			self._execute_task_before (_task._handle, _task._identifier, _task._transaction, _plan, _task._test, _task._debug)
+			self._execute_task_actual (_task._handle, _task._identifier, _task._transaction, _plan, _task._test, _task._debug)
+			self._execute_task_after (_task._handle, _task._identifier, _task._transaction, _plan, _task._test, _task._debug)
 			
 			_plan._report_progress ()
 	
 	
-	def _execute_plan_parallelized (self, _plan, _tasks, _parallelism_threads) :
+	def _execute_plan_parallelized (self, _plan) :
 		
-		self._transcript.notice (0x0ee7d23b, "executing parallelized (%d threads)...", _parallelism_threads)
+		self._transcript.notice (0x0ee7d23b, "executing parallelized (%d)...", _plan._parallelism)
 		
+		_parallelism_threads = _plan._parallelism
 		_parallelism_queue = _parallelism_threads * 4
 		_pending_queue = queue.Queue (_parallelism_queue)
 		_executed_queue = queue.Queue (_parallelism_queue)
@@ -164,7 +162,7 @@ class Executor (object) :
 				_task = _pending_queue.get ()
 				if _task is None :
 					break
-				self._execute_task_actual (_task._handle, _task._identifier, _task._transaction, _task._test, _task._debug)
+				self._execute_task_actual (_task._handle, _task._identifier, _task._transaction, _plan, _task._test, _task._debug)
 				_executed_queue.put (_task)
 		
 		_threads = list ()
@@ -173,8 +171,7 @@ class Executor (object) :
 			_thread.daemon = True
 			_thread.start ()
 		
-		_tasks_expected = 0
-		_tasks_queue = list (_tasks)
+		_tasks_queue = list (_plan._tasks)
 		_tasks_expected = len (_tasks_queue)
 		
 		while True :
@@ -184,13 +181,13 @@ class Executor (object) :
 			
 			while len (_tasks_queue) > 0 and not _pending_queue.full () :
 				_task = _tasks_queue.pop ()
-				self._execute_task_before (_task._handle, _task._identifier, _task._transaction, _task._test, _task._debug)
+				self._execute_task_before (_task._handle, _task._identifier, _task._transaction, _plan, _task._test, _task._debug)
 				_pending_queue.put (_task)
 			
 			while True :
 				_task = _executed_queue.get ()
 				_tasks_expected -= 1
-				self._execute_task_after (_task._handle, _task._identifier, _task._transaction, _task._test, _task._debug)
+				self._execute_task_after (_task._handle, _task._identifier, _task._transaction, _plan, _task._test, _task._debug)
 				self._update_statistics (_task._statistics_stack, _task._transaction)
 				if _executed_queue.empty () :
 					break
@@ -203,52 +200,52 @@ class Executor (object) :
 			_thread.join ()
 	
 	
-	def _execute_task_before (self, _handle, _identifier, _transaction, _test, _debug) :
+	def _execute_task_before (self, _handle, _identifier, _transaction, _plan, _test, _debug) :
 		
 		self._transcript.cut ()
 		self._transcript.debug (0xe6c0c539, "executing [%s] `%s`...", _handle, _identifier)
 		
-		if self._hooks is not None :
-			self._hooks.before_prepare_test (_handle, _identifier, _test, _transaction)
+		if _plan._hooks is not None :
+			_plan._hooks.before_prepare_test (_handle, _identifier, _test, _transaction)
 		
 		_transaction.prepare ()
 		
-		if self._hooks is not None :
-			self._hooks.after_prepare_test (_handle, _identifier, _test, _transaction)
+		if _plan._hooks is not None :
+			_plan._hooks.after_prepare_test (_handle, _identifier, _test, _transaction)
 		
-		if self._hooks is not None :
-			self._hooks.before_execute_test (_handle, _identifier, _test, _transaction)
+		if _plan._hooks is not None :
+			_plan._hooks.before_execute_test (_handle, _identifier, _test, _transaction)
 	
 	
-	def _execute_task_actual (self, _handle, _identifier, _transaction, _test, _debug) :
+	def _execute_task_actual (self, _handle, _identifier, _transaction, _plan, _test, _debug) :
 		
 		_transaction.execute ()
 	
 	
-	def _execute_task_after (self, _handle, _identifier, _transaction, _test, _debug) :
+	def _execute_task_after (self, _handle, _identifier, _transaction, _plan, _test, _debug) :
 		
-		if self._hooks is not None :
-			self._hooks.after_execute_test (_handle, _identifier, _test, _transaction)
+		if _plan._hooks is not None :
+			_plan._hooks.after_execute_test (_handle, _identifier, _test, _transaction)
 		
-		if self._hooks is not None :
-			self._hooks.before_enforce_test (_handle, _identifier, _test, _transaction)
+		if _plan._hooks is not None :
+			_plan._hooks.before_enforce_test (_handle, _identifier, _test, _transaction)
 		
 		_succeeded = _transaction.enforce ()
 		
-		if self._hooks is not None :
-			self._hooks.after_enforce_test (_handle, _identifier, _test, _transaction)
+		if _plan._hooks is not None :
+			_plan._hooks.after_enforce_test (_handle, _identifier, _test, _transaction)
 		
 		if _succeeded :
 			
-			if self._hooks is not None :
-				self._hooks.succeeded_test (_handle, _identifier, _test, _transaction)
+			if _plan._hooks is not None :
+				_plan._hooks.succeeded_test (_handle, _identifier, _test, _transaction)
 			
 			self._transcript.debug (0x9541c9ec, "succeeded executing [%s];", _handle)
 			
 		else :
 			
-			if self._hooks is not None :
-				self._hooks.failed_test (_handle, _identifier, _test, _transaction)
+			if _plan._hooks is not None :
+				_plan._hooks.failed_test (_handle, _identifier, _test, _transaction)
 			
 			self._transcript.error (0x78f26ad5, "failed executing [%s] `%s`!", _handle, _identifier)
 		
@@ -305,14 +302,35 @@ class ExecutionTask (object) :
 
 class ExecutionPlan (object) :
 	
-	def __init__ (self, _debug) :
+	def __init__ (self, _context, _transport, _hooks, _parallelism, _debug) :
+		
+		if _parallelism is None :
+			_parallelism = True
+		
+		if _parallelism is False :
+			_parallelism = 1
+		elif _parallelism is True :
+			_parallelism = 64
+		elif isinstance (_parallelism, int) and _parallelism >= 1 :
+			pass
+		else :
+			raise Exception (0xf248be6c)
+		
+		self._context = _context
+		self._transport = _transport
+		self._hooks = _hooks
+		self._parallelism = _parallelism
+		self._debug = _debug
+		
 		self._transcript = transcript (self, 0xcc4f6cd1)
+		
 		self._tasks = list ()
 		self._tasks_by_handle = dict ()
 		self._tasks_by_identifier = dict ()
+		
 		self._statistics = ExecutionStatistics ()
 		self._statistics._aggregated = dict ()
-		self._debug = _debug
+		
 		self._report_progress_last_count_executed = 0
 	
 	
@@ -402,7 +420,7 @@ class ExecutionPlan (object) :
 			_tracer_meta.cut ()
 			
 			
-			for _identifier, _task in sorted (self._tasks_by_identifier.iteritems ()) :
+			for _task in self._tasks :
 				_succeeded = _task._transaction.succeeded
 				_tracer.cut ()
 				if not _succeeded :

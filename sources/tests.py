@@ -61,8 +61,8 @@ class TestBase (object) :
 	
 	
 	def execute (self, hooks = None, parallelism = None, debug = None) :
-		_executor = Executor (self._context, hooks)
-		_execution = _executor.execute (self, _parallelism = parallelism, _debug = debug)
+		_executor = Executor (self._context, _hooks = hooks, _parallelism = parallelism, _debug = debug)
+		_execution = _executor.execute (self)
 		return _execution
 	
 	
