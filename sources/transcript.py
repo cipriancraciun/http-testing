@@ -1,5 +1,6 @@
 
 import logging
+import thread, threading
 
 
 logging.NOTICE = (logging.INFO + logging.WARNING) / 2
@@ -142,13 +143,14 @@ class TracerFunc (object) :
 		self._push (self._level, _code, _arguments_list, _arguments_dict, self._indent)
 	
 	
-	def cut (self) :
-		self._tracer.cut ()
-	
 	def fork (self, _indent = True) :
 		_indent = _merge_indent (self._indent, _indent)
 		_fork = TracerFunc (self._tracer, self._push, self._level, _indent)
 		return _fork
+	
+	
+	def cut (self) :
+		self._tracer.cut ()
 	
 	def indent (self, _indent = True) :
 		self._indent = _merge_indent (self._indent, _indent)
@@ -180,10 +182,11 @@ class Transcript (Tracer) :
 	
 	def cut (self) :
 		global _transcript_last_was_cut
-		if _transcript_last_was_cut :
-			return
-		self._logger.log (logging.CUT, "----------------------------")
-		_transcript_last_was_cut = True
+		with _transcript_mutex :
+			if _transcript_last_was_cut :
+				return
+			self._logger.log (logging.CUT, "----------------------------")
+			_transcript_last_was_cut = True
 	
 	
 	def _log (self, _level, _code, _arguments_list, _arguments_dict, _indent) :
@@ -192,12 +195,20 @@ class Transcript (Tracer) :
 			_message = _arguments_list[0]
 			_arguments_list = _arguments_list[1:]
 			_indent = _merge_indent (self._indent, _indent)
-			_prefix = "[%08x:%08x:%08x]    " % (self._code, self._instance, _code)
+			_thread_ident = thread.get_ident ()
+			if _thread_ident == _transcript_main_thread_ident :
+				_prefix = "[%08x:%08x:%08x]    " % (self._code, self._instance, _code)
+			else :
+				_prefix = "[%016x][%08x:%08x:%08x]    " % (_thread_ident, self._code, self._instance, _code)
 			_prefix += "|  " * _indent
-			self._logger._log (_level, _prefix + _message, tuple (_arguments_list), **_arguments_dict)
-			_transcript_last_was_cut = False
+			with _transcript_mutex :
+				self._logger._log (_level, _prefix + _message, tuple (_arguments_list), **_arguments_dict)
+				_transcript_last_was_cut = False
+
 
 _transcript_last_was_cut = False
+_transcript_main_thread_ident = thread.get_ident ()
+_transcript_mutex = threading.Lock ()
 
 
 

@@ -3,6 +3,7 @@
 import httplib
 import ssl
 import urllib
+import threading
 import time
 
 
@@ -486,19 +487,25 @@ class Transport (object) :
 		self._context = _context
 		self._transcript = transcript (self, 0xb497f562)
 		self._connections_pool = dict ()
+		self._mutex = threading.Lock ()
 	
 	
 	def connect (self, _endpoint, _tls) :
 		
 		_key = (_endpoint, _tls)
-		if _key in self._connections_pool :
-			_connections = self._connections_pool[_key]
-			if len (_connections) > 0 :
-				_connection = _connections.pop ()
-				if (time.time () - _connection.____httt_timestamp) <= 6 :
-					self._transcript.debug (0x3a3b0c4d, "reusing connection to `%s` with TLS `%s`;", _endpoint, _tls)
-					_connection.____httt_counter += 1
-					return _connection
+		_connection = None
+		
+		with self._mutex :
+			if _key in self._connections_pool :
+				_connections = self._connections_pool[_key]
+				if len (_connections) > 0 :
+					_connection = _connections.pop ()
+		
+		if _connection is not None :
+			if (time.time () - _connection.____httt_timestamp) <= 6 :
+				self._transcript.debug (0x3a3b0c4d, "reusing connection to `%s` with TLS `%s`;", _endpoint, _tls)
+				_connection.____httt_counter += 1
+				return _connection
 		
 		self._transcript.debug (0x95adb4dd, "connecting to `%s` with TLS `%s`...", _endpoint, _tls)
 		
@@ -534,8 +541,10 @@ class Transport (object) :
 		_connection.____httt_timestamp = time.time ()
 		
 		_key = _connection.____httt_key
-		if _key not in self._connections_pool :
-			self._connections_pool[_key] = [_connection]
-		else :
-			self._connections_pool[_key].append (_connection)
+		
+		with self._mutex :
+			if _key not in self._connections_pool :
+				self._connections_pool[_key] = [_connection]
+			else :
+				self._connections_pool[_key].append (_connection)
 
