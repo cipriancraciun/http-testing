@@ -60,9 +60,9 @@ class TestBase (object) :
 		self._skip = _skip
 	
 	
-	def execute (self, _hooks = None) :
-		_executor = Executor (self._context, _hooks)
-		_execution = _executor.execute (self)
+	def execute (self, hooks = None, parallelism = None, debug = None) :
+		_executor = Executor (self._context, hooks)
+		_execution = _executor.execute (self, _parallelism = parallelism, _debug = debug)
 		return _execution
 	
 	
