@@ -26,11 +26,15 @@ class Executor (object) :
 		_plan = ExecutionPlan (_debug)
 		
 		self._transcript.cut ()
-		self._transcript.internal (0x91657e21, "executing...")
+		self._transcript.notice (0x8d8c3f01, "planning...")
+		self._plan (_plan, _test, None, None, None, False)
+		self._transcript.debug (0xa4b3290e, "planned;")
+		self._transcript.cut ()
 		
-		self._execute (_plan, _test, None, None, None, False)
-		
-		self._transcript.internal (0x310eac5e, "executed;")
+		self._transcript.cut ()
+		self._transcript.debug (0x91657e21, "executing...")
+		self._execute_plan (_plan)
+		self._transcript.debug (0x310eac5e, "executed;")
 		self._transcript.cut ()
 		
 		_plan._report_execution ()
@@ -38,27 +42,25 @@ class Executor (object) :
 		return _plan
 	
 	
-	def _execute (self, _plan, _test, _tests_stack, _identifier_stack, _debug, _skip) :
+	def _plan (self, _plan, _test, _identifier_stack, _statistics_stack, _debug, _skip) :
 		if isinstance (_test, tests.Test) :
-			self._execute_test (_plan, _test, _tests_stack, _identifier_stack, _debug, _skip)
+			self._plan_test (_plan, _test, _identifier_stack, _statistics_stack, _debug, _skip)
 		elif isinstance (_test, tests.Tests) :
-			self._execute_tests (_plan, _test, _tests_stack, _identifier_stack, _debug, _skip)
+			self._plan_tests (_plan, _test, _identifier_stack, _statistics_stack, _debug, _skip)
 		else :
 			raise Exception (0xbe83caa9)
-		_plan._report_progress ()
 	
 	
-	def _execute_tests (self, _plan, _tests, _tests_stack, _identifier_stack, _debug, _skip) :
+	def _plan_tests (self, _plan, _tests, _identifier_stack, _statistics_stack, _debug, _skip) :
 		
-		_tests_stack = (_tests_stack, _tests)
 		_identifier_stack = (_identifier_stack, _tests.identifier)
 		_identifier = stringify_identifier (_identifier_stack)
 		_handle = fingerprint (_identifier_stack)
 		
-		if _tests_stack[0] is None :
-			_statistics = _plan._statistics
-		else :
-			_statistics = _tests_stack[0][1]._statistics
+		if _statistics_stack is None :
+			_statistics_stack = (None, _plan._statistics)
+		_statistics = _statistics_stack[1]
+		
 		if _tests.identifier in _statistics._aggregated :
 			_statistics = _statistics._aggregated[_tests.identifier]
 		else :
@@ -67,46 +69,66 @@ class Executor (object) :
 			_statistics._identifier = _tests.identifier
 			_statistics._aggregated = dict ()
 		
-		_tests._statistics = _statistics
+		_statistics_stack = (_statistics_stack, _statistics)
 		
 		_debug = _tests._debug if _debug is None else _debug
-		self._transcript.debug (0xe605026e, "beginning [%s] `%s`...", _handle, _identifier)
+		self._transcript.debug (0xe605026e, "planning [%s] `%s`...", _handle, _identifier)
 		
 		if _skip or _tests._skip or self._hooks is not None and not self._hooks.should_execute_tests (_handle, _identifier, _tests) :
 			self._transcript.debug (0x94dc4cef, "skipping [%s] `%s`...", _handle, _identifier)
 			_skip = True
 		
 		for _test in _tests._tests :
-			self._execute (_plan, _test, _tests_stack, _identifier_stack, _debug, _skip)
+			self._plan (_plan, _test, _identifier_stack, _statistics_stack, _debug, _skip)
 		
-		if _tests._statistics.succeeded :
-			self._transcript.internal (0xd6ef2184, "finished [%s] `%s`;", _handle, _identifier)
-		else :
-			self._transcript.notice (0xd5081953, "finished [%s] `%s`:  %d executed;  %d (%.0f%%) failed;  %d skipped;", _handle, _identifier, _tests._statistics.count_executed, _tests._statistics.count_failed, _tests._statistics.ratio_failed * 100, _tests._statistics.count_skipped)
+		self._transcript.debug (0x16de40be, "planned [%s] `%s`;", _handle, _identifier)
 	
 	
-	def _execute_test (self, _plan, _test, _tests_stack, _identifier_stack, _debug, _skip) :
+	def _plan_test (self, _plan, _test, _identifier_stack, _statistics_stack, _debug, _skip) :
 		
 		_identifier_stack = (_identifier_stack, _test.identifier)
 		_identifier = stringify_identifier (_identifier_stack)
 		_enforcer_handle = _test.responses.fingerprint ()
 		_handle = fingerprint ((_identifier_stack, _enforcer_handle))
 		
-		if _handle in _plan._transactions_by_handle :
-			self._transcript.error (0x0472ccf3, "duplicate [%s] `%s`;  ignoring!", _handle, _identifier)
+		if _handle in _plan._tasks_by_handle :
+			self._transcript.warning (0x0472ccf3, "duplicate [%s] `%s`;  ignoring!", _handle, _identifier)
 			return
 		
 		if _skip or _test._skip or self._hooks is not None and not self._hooks.should_execute_test (_handle, _identifier, _test) :
 			self._transcript.debug (0xe3195455, "skipping [%s] `%s`...", _handle, _identifier)
-			_plan._update_statistics (_tests_stack, None)
+			self._update_statistics (_statistics_stack, False)
 			return
 		
 		_debug = _test._debug if _debug is None else _debug
-		self._transcript.cut ()
-		self._transcript.info (0xe6c0c539, "executing [%s] `%s`...", _handle, _identifier)
 		
 		_session = Session ()
 		_transaction = Transaction (self._context, self._transport, _session, _test.requests, _test.responses)
+		_task = ExecutionTask (_handle, _identifier, _test, _transaction, _enforcer_handle, _statistics_stack, _debug)
+		
+		_plan._enqueue_task (_task)
+		self._update_statistics (_statistics_stack, True)
+	
+	
+	def _execute_plan (self, _plan) :
+		
+		for _identifier, _task in sorted (_plan._tasks_by_identifier.iteritems ()) :
+			self._execute_task (_task)
+			_plan._report_progress ()
+	
+	
+	def _execute_task (self, _task) :
+		
+		_handle = _task._handle
+		_identifier = _task._identifier
+		_transaction = _task._transaction
+		_test = _task._test
+		_enforcer_handle = _task._enforcer_handle
+		_statistics_stack = _task._statistics_stack
+		_debug = _task._debug
+		
+		self._transcript.cut ()
+		self._transcript.debug (0xe6c0c539, "executing [%s] `%s`...", _handle, _identifier)
 		
 		if self._hooks is not None :
 			self._hooks.before_prepare_test (_handle, _identifier, _test, _transaction)
@@ -131,9 +153,6 @@ class Executor (object) :
 		
 		if self._hooks is not None :
 			self._hooks.after_enforce_test (_handle, _identifier, _test, _transaction)
-		
-		_plan._transactions.append ((_identifier, _transaction, _handle, _enforcer_handle))
-		_plan._transactions_by_handle[_handle] = _transaction
 		
 		if _succeeded :
 			
@@ -166,18 +185,38 @@ class Executor (object) :
 		
 		_transaction.sanitize ()
 		
-		self._transcript.internal (0x4b83e138, "executed [%s];", _handle)
+		self._transcript.debug (0x4b83e138, "executed [%s];", _handle)
 		self._transcript.cut ()
 		
-		_plan._update_statistics (_tests_stack, _transaction)
+		self._update_statistics (_statistics_stack, _transaction)
+	
+	
+	def _update_statistics (self, _statistics_stack, _transaction) :
+		
+		while _statistics_stack is not None :
+			
+			if _transaction is True :
+				_statistics_stack[1]._update_planned ()
+			elif _transaction is False :
+				_statistics_stack[1]._update_skipped ()
+			else :
+				_statistics_stack[1]._update_executed (_transaction)
+			
+			_statistics_stack = _statistics_stack[0]
 
 
 
 
 class ExecutionTask (object) :
 	
-	def __init__ (self) :
-		pass
+	def __init__ (self, _handle, _identifier, _test, _transaction, _enforcer_handle, _statistics_stack, _debug) :
+		self._handle = _handle
+		self._identifier = _identifier
+		self._test = _test
+		self._transaction = _transaction
+		self._enforcer_handle = _enforcer_handle
+		self._statistics_stack = _statistics_stack
+		self._debug = _debug
 
 
 
@@ -186,28 +225,20 @@ class ExecutionPlan (object) :
 	
 	def __init__ (self, _debug) :
 		self._transcript = transcript (self, 0xcc4f6cd1)
-		self._transactions = list ()
-		self._transactions_by_handle = dict ()
+		self._tasks = list ()
+		self._tasks_by_handle = dict ()
+		self._tasks_by_identifier = dict ()
 		self._statistics = ExecutionStatistics ()
 		self._statistics._aggregated = dict ()
 		self._debug = _debug
 		self._report_progress_last_count_executed = 0
 	
 	
-	def _update_statistics (self, _tests_stack, _transaction) :
+	def _enqueue_task (self, _task) :
 		
-		while _tests_stack is not None :
-			if _transaction is not None :
-				_tests_stack[1]._statistics._update_executed (_transaction)
-			else :
-				_tests_stack[1]._statistics._update_skipped ()
-			
-			_tests_stack = _tests_stack[0]
-		
-		if _transaction is not None :
-			self._statistics._update_executed (_transaction)
-		else :
-			self._statistics._update_skipped ()
+		self._tasks.append (_task)
+		self._tasks_by_handle[_task._handle] = _task
+		self._tasks_by_identifier[_task._identifier] = _task
 	
 	
 	def _report_progress (self) :
@@ -218,14 +249,14 @@ class ExecutionPlan (object) :
 		self._report_progress_last_count_executed = self._statistics.count_executed
 		
 		self._transcript.cut ()
-		self._transcript.notice (0xe8e97c33, "execution progress:  %d executed;  %d (%.0f%%) failed;  %d skipped;", self._statistics.count_executed, self._statistics.count_failed, self._statistics.ratio_failed * 100, self._statistics.count_skipped)
+		self._transcript.notice (0xe8e97c33, "execution progress:  %d (%.0f%%) executed;  %d (%.0f%%) failed;  %d planned;  %d skipped;", self._statistics.count_executed, self._statistics.ratio_executed * 100, self._statistics.count_failed, self._statistics.ratio_failed * 100, self._statistics.count_planned, self._statistics.count_skipped)
 		self._transcript.cut ()
 	
 	
 	def _report_execution (self) :
 		self._transcript.cut ()
 		
-		if len (self._transactions) > 0 :
+		if self._statistics.count_executed > 0 :
 			if self._statistics.succeeded :
 				self._transcript.notice (0xd23fd5de, "execution outcome:  %d executed;  %d skipped;  all succeeded;", self._statistics.count_executed, self._statistics.count_skipped)
 			else :
@@ -254,7 +285,7 @@ class ExecutionPlan (object) :
 	
 	def _trace (self, _tracer) :
 		
-		if len (self._transactions) > 0 :
+		if len (self._tasks) > 0 :
 			
 			_tracer_meta = _tracer.fork (False)
 			_tracer_meta.cut ()
@@ -289,8 +320,8 @@ class ExecutionPlan (object) :
 			_tracer_meta.cut ()
 			
 			
-			for _identifier, _transaction, _handle, _enforcer_handle in sorted (self._transactions) :
-				_succeeded = _transaction.succeeded
+			for _identifier, _task in sorted (self._tasks_by_identifier.iteritems ()) :
+				_succeeded = _task._transaction.succeeded
 				_tracer.cut ()
 				if not _succeeded :
 					_tracer (0xb86f3e97, "!!!! FAILED !!!!")
@@ -303,11 +334,11 @@ class ExecutionPlan (object) :
 					_tracer_meta (0x3191db36, "outcome: succeeded;")
 				else :
 					_tracer_meta (0x2264995e, "outcome: failed;")
-				_tracer_meta (0x2d836357, "identifier: `%s`;", _identifier)
-				_tracer_meta (0xdb41b7d9, "handle: `%s`;", _handle)
-				_tracer_meta (0xf802fd92, "enforcer: `%s`;", _enforcer_handle)
+				_tracer_meta (0x2d836357, "identifier: `%s`;", _task._identifier)
+				_tracer_meta (0xdb41b7d9, "handle: `%s`;", _task._handle)
+				_tracer_meta (0xf802fd92, "enforcer: `%s`;", _task._enforcer_handle)
 				_tracer_meta.indent (-1)
-				_transaction._trace (_tracer_meta, True)
+				_task._transaction._trace (_tracer_meta, True)
 				if not _succeeded :
 					_tracer (0x14aaf57d, "!!!! FAILED !!!!")
 				_tracer.cut ()
@@ -334,9 +365,11 @@ class ExecutionStatistics (object) :
 		self.count_succeeded = 0
 		self.count_failed = 0
 		
+		self.count_planned = 0
 		self.count_skipped = 0
 		self.count_total = 0
 		
+		self.ratio_executed = 0
 		self.ratio_succeeded = 0
 		self.ratio_failed = 0
 	
@@ -344,7 +377,6 @@ class ExecutionStatistics (object) :
 	def _update_executed (self, _transaction) :
 		
 		self.count_executed += 1
-		self.count_total += 1
 		
 		if _transaction.succeeded :
 			self.count_succeeded += 1
@@ -352,8 +384,15 @@ class ExecutionStatistics (object) :
 			self.count_failed += 1
 			self.succeeded = False
 		
+		self.ratio_executed = float (self.count_executed) / self.count_planned
 		self.ratio_succeeded = float (self.count_succeeded) / self.count_executed
 		self.ratio_failed = float (self.count_failed) / self.count_executed
+	
+	
+	def _update_planned (self) :
+		
+		self.count_planned += 1
+		self.count_total += 1
 	
 	
 	def _update_skipped (self) :
