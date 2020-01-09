@@ -108,7 +108,7 @@ def flatten_list_or_similar (_value, _normalizer = None, _enforcer = None) :
 	return _accumulator
 
 
-def flatten_list_0 (_accumulator, _value, _flatten_none, _flatten_tupples, _flatten_sets, _normalizer, _enforcer) :
+def flatten_list_0 (_accumulator, _value, _flatten_none, _flatten_tuples, _flatten_sets, _normalizer, _enforcer) :
 	
 	if isinstance (_value, list) :
 		pass
@@ -139,7 +139,7 @@ def flatten_list_0 (_accumulator, _value, _flatten_none, _flatten_tupples, _flat
 		return
 	
 	for _value in _value :
-		flatten_list_0 (_accumulator, _value, _flatten_none, _flatten_tuples, _flatten_sets)
+		flatten_list_0 (_accumulator, _value, _flatten_none, _flatten_tuples, _flatten_sets, _normalizer, _enforcer)
 
 
 
