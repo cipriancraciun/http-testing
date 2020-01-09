@@ -6,7 +6,9 @@ import sys
 
 _tests = tests (
 		identifier = "google",
-		requests = chain.with_endpoint ("https:www3.l.google.com:443"),
+		requests = chain
+				.with_endpoint ("https:www3.l.google.com:443")
+				.with_header ("User-Agent", "HTTT"),
 		responses = chain
 				.has_header ("server", "gws")
 				.has_header ("date")
