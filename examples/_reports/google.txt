@@ -20,11 +20,12 @@
 [67181c6a]      * meta:
 [3191db36]          outcome: succeeded;
 [2d836357]          identifier: `google -- apex-to-www-redirect`;
-[db41b7d9]          handle: `cfd62f23df67c8ac69357633ad83201e`;
-[f802fd92]          enforcer: `f742142c5cf5ff62e9656e7af7dc78a6`;
+[db41b7d9]          handle: `43d2bc8f1363dfd7325d554fe1f818d0`;
+[f802fd92]          request builder: `d7afe873386d0afaf846de225b29be8e`;
+[f802fd92]          response enforcer: `f742142c5cf5ff62e9656e7af7dc78a6`;
 [08574ba6]      * annotations:
 [cb6c9a7b]          [dd] [47061c22]  header `server`:  matched expected, `gws`;
-[cb6c9a7b]          [dd] [cb6a7efc]  header `date`:  matched present, `Thu, 09 Jan 2020 21:11:44 GMT`;
+[cb6c9a7b]          [dd] [cb6a7efc]  header `date`:  matched present, `Thu, 09 Jan 2020 21:28:49 GMT`;
 [cb6c9a7b]          [dd] [cb6a7efc]  header `alt-svc`:  matched present, `quic=":443"; ma=2592000; v="46,43",h3-Q050=":443"; ma=2592000,h3-Q049=":443"; ma=2592000,h3-Q048=":443"; ma=2592000,h3-Q046=":443"; ma=2592000,h3-Q043=":443"; ma=2592000`;
 [cb6c9a7b]          [dd] [09058571]  status code:  matched in set, `301`;
 [cb6c9a7b]          [dd] [47061c22]  header `Location`:  matched expected, `https://www.google.com/`;
@@ -45,14 +46,14 @@
 [78ba5bbe]          header `cache-control`: `public, max-age=2592000`;
 [78ba5bbe]          header `content-length`: `220`;
 [78ba5bbe]          header `content-type`: `text/html; charset=UTF-8`;
-[78ba5bbe]          header `date`: `Thu, 09 Jan 2020 21:11:44 GMT`;
-[78ba5bbe]          header `expires`: `Sat, 08 Feb 2020 21:11:44 GMT`;
+[78ba5bbe]          header `date`: `Thu, 09 Jan 2020 21:28:49 GMT`;
+[78ba5bbe]          header `expires`: `Sat, 08 Feb 2020 21:28:49 GMT`;
 [78ba5bbe]          header `location`: `https://www.google.com/`;
 [78ba5bbe]          header `server`: `gws`;
 [78ba5bbe]          header `x-frame-options`: `SAMEORIGIN`;
 [78ba5bbe]          header `x-xss-protection`: `0`;
 [fea4219c]          body: `220` bytes;  md5: `276bbb20c29087e88db63899fd8f9129`;
-[7bf3732b]          fingerprint: `220640297ac6966a196206ca9d057daa`;
+[7bf3732b]          fingerprint: `b0fdf469c2593349dc860bab82998daa`;
 
             ------------------------------------------------------------
 
@@ -61,11 +62,12 @@
 [67181c6a]      * meta:
 [2264995e]          outcome: failed;
 [2d836357]          identifier: `google -- fail`;
-[db41b7d9]          handle: `1d6bb8f4eca6f2e797dab4a59229f034`;
-[f802fd92]          enforcer: `8ffb4ab4cb260353bda8696c5c4b3b33`;
+[db41b7d9]          handle: `0486042214265b5acbe1b82ca34af4a4`;
+[f802fd92]          request builder: `8e79fb730394432283e344a20bc4aeee`;
+[f802fd92]          response enforcer: `8ffb4ab4cb260353bda8696c5c4b3b33`;
 [08574ba6]      * annotations:
 [cb6c9a7b]          [ww] [6a5c7a4f]  header `server`:  expected `gws`, received none!
-[cb6c9a7b]          [dd] [cb6a7efc]  header `date`:  matched present, `Thu, 09 Jan 2020 21:11:44 GMT`;
+[cb6c9a7b]          [dd] [cb6a7efc]  header `date`:  matched present, `Thu, 09 Jan 2020 21:28:49 GMT`;
 [cb6c9a7b]          [dd] [cb6a7efc]  header `alt-svc`:  matched present, `quic=":443"; ma=2592000; v="46,43",h3-Q050=":443"; ma=2592000,h3-Q049=":443"; ma=2592000,h3-Q048=":443"; ma=2592000,h3-Q046=":443"; ma=2592000,h3-Q043=":443"; ma=2592000`;
 [cb6c9a7b]          [ww] [79b1b50d]  status code:  expected `200`,  received `404`!
 [cb6c9a7b]          [dd] [997fdd5b]  body:  matched present, `1561` bytes;
@@ -85,10 +87,10 @@
 [78ba5bbe]          header `alt-svc`: `quic=":443"; ma=2592000; v="46,43",h3-Q050=":443"; ma=2592000,h3-Q049=":443"; ma=2592000,h3-Q048=":443"; ma=2592000,h3-Q046=":443"; ma=2592000,h3-Q043=":443"; ma=2592000`;
 [78ba5bbe]          header `content-length`: `1561`;
 [78ba5bbe]          header `content-type`: `text/html; charset=UTF-8`;
-[78ba5bbe]          header `date`: `Thu, 09 Jan 2020 21:11:44 GMT`;
+[78ba5bbe]          header `date`: `Thu, 09 Jan 2020 21:28:49 GMT`;
 [78ba5bbe]          header `referrer-policy`: `no-referrer`;
 [fea4219c]          body: `1561` bytes;  md5: `b81150861bf911f947660cf73bce77f6`;
-[7bf3732b]          fingerprint: `e7989ec8a05ef8f522941694e7dbaee9`;
+[7bf3732b]          fingerprint: `2a5b936704f2e12b8abc1641f0c344a6`;
 [14aaf57d]  !!!! FAILED !!!!
 
             ------------------------------------------------------------
@@ -97,14 +99,15 @@
 [67181c6a]      * meta:
 [3191db36]          outcome: succeeded;
 [2d836357]          identifier: `google -- www-get-/`;
-[db41b7d9]          handle: `4a6deab77463bd8fa10112f50842037f`;
-[f802fd92]          enforcer: `8ffb4ab4cb260353bda8696c5c4b3b33`;
+[db41b7d9]          handle: `eef213741741fa859496280545b1f6c2`;
+[f802fd92]          request builder: `41007fba8bb1cef9766070d45f08b3fa`;
+[f802fd92]          response enforcer: `8ffb4ab4cb260353bda8696c5c4b3b33`;
 [08574ba6]      * annotations:
 [cb6c9a7b]          [dd] [47061c22]  header `server`:  matched expected, `gws`;
-[cb6c9a7b]          [dd] [cb6a7efc]  header `date`:  matched present, `Thu, 09 Jan 2020 21:11:44 GMT`;
+[cb6c9a7b]          [dd] [cb6a7efc]  header `date`:  matched present, `Thu, 09 Jan 2020 21:28:49 GMT`;
 [cb6c9a7b]          [dd] [cb6a7efc]  header `alt-svc`:  matched present, `quic=":443"; ma=2592000; v="46,43",h3-Q050=":443"; ma=2592000,h3-Q049=":443"; ma=2592000,h3-Q048=":443"; ma=2592000,h3-Q046=":443"; ma=2592000,h3-Q043=":443"; ma=2592000`;
 [cb6c9a7b]          [dd] [bb548cd6]  status code:  matched expected, `200`;
-[cb6c9a7b]          [dd] [997fdd5b]  body:  matched present, `13318` bytes;
+[cb6c9a7b]          [dd] [997fdd5b]  body:  matched present, `13308` bytes;
 [a21095ed]      * request:
 [7fc84f53]          host: `www.google.com`;
 [2ec04778]          method: `GET`;
@@ -122,17 +125,17 @@
 [78ba5bbe]          header `alt-svc`: `quic=":443"; ma=2592000; v="46,43",h3-Q050=":443"; ma=2592000,h3-Q049=":443"; ma=2592000,h3-Q048=":443"; ma=2592000,h3-Q046=":443"; ma=2592000,h3-Q043=":443"; ma=2592000`;
 [78ba5bbe]          header `cache-control`: `private, max-age=0`;
 [78ba5bbe]          header `content-type`: `text/html; charset=ISO-8859-1`;
-[78ba5bbe]          header `date`: `Thu, 09 Jan 2020 21:11:44 GMT`;
+[78ba5bbe]          header `date`: `Thu, 09 Jan 2020 21:28:49 GMT`;
 [78ba5bbe]          header `expires`: `-1`;
 [78ba5bbe]          header `p3p`: `CP="This is not a P3P policy! See g.co/p3phelp for more info."`;
 [78ba5bbe]          header `server`: `gws`;
-[78ba5bbe]          header `set-cookie`: `1P_JAR=2020-01-09-21; expires=Sat, 08-Feb-2020 21:11:44 GMT; path=/; domain=.google.com; Secure, NID=195=Sd2b7B0zd9gHekjowi8dg00Jetppovg8rdsVjNHqrBPyPYhZHgbFBjFmvDr61PDo6R8A5cx__JSpQfAsXyFdQbmrPpTFNpysOPaonQ3UUb1GsQ5iN4fVMWoQe40KgDyVe5LsXQHedH_L6lwEw5p5cNIMTqD8k3MTtP-yPZQ5JV0; expires=Fri, 10-Jul-2020 21:11:44 GMT; path=/; domain=.google.com; HttpOnly`;
+[78ba5bbe]          header `set-cookie`: `1P_JAR=2020-01-09-21; expires=Sat, 08-Feb-2020 21:28:49 GMT; path=/; domain=.google.com; Secure, NID=195=aIDUV0AjjRqa4-aUZD5TL2yvOAyY6ysuHJG0G5f9uhVzIRv4PVm8ko1O8VGniJaia9xj67M9Z6aJ4v_yxQQMBtrCCnXJvxZX3OiJau6OOnVO09bUTA-y1XeuXHsoXF8Hjj77ft8Gi8dmCx5Bw7KyNK9xq7iG8OHIX-x-AWdmkRU; expires=Fri, 10-Jul-2020 21:28:49 GMT; path=/; domain=.google.com; HttpOnly`;
 [78ba5bbe]          header `transfer-encoding`: `chunked`;
 [78ba5bbe]          header `vary`: `Accept-Encoding`;
 [78ba5bbe]          header `x-frame-options`: `SAMEORIGIN`;
 [78ba5bbe]          header `x-xss-protection`: `0`;
-[fea4219c]          body: `13318` bytes;  md5: `9dd7a39f0a66cd4bcfec64a53c9cc6ef`;
-[7bf3732b]          fingerprint: `f7eaaed2e4d3e715d40f1e1be5197398`;
+[fea4219c]          body: `13308` bytes;  md5: `5334cf61d5469795fa15cfd47b33d269`;
+[7bf3732b]          fingerprint: `04d91e728b6dc193579f3f18552a0209`;
 
             ------------------------------------------------------------
 

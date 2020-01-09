@@ -104,8 +104,9 @@ class Executor (object) :
 		
 		_identifier_stack = (_identifier_stack, _test.identifier)
 		_identifier = stringify_identifier (_identifier_stack)
+		_builder_handle = _test.requests.fingerprint ()
 		_enforcer_handle = _test.responses.fingerprint ()
-		_handle = fingerprint ((_identifier_stack, _enforcer_handle))
+		_handle = fingerprint ((_identifier_stack, _builder_handle, _enforcer_handle))
 		
 		_debug = _test._debug if _debug is None else _debug
 		
@@ -120,7 +121,7 @@ class Executor (object) :
 		
 		_session = Session ()
 		_transaction = Transaction (_plan._context, _plan._transport, _session, _test.requests, _test.responses)
-		_task = ExecutionTask (_handle, _identifier, _test, _transaction, _enforcer_handle, _statistics_stack, _debug)
+		_task = ExecutionTask (_handle, _identifier, _test, _transaction, _builder_handle, _enforcer_handle, _statistics_stack, _debug)
 		
 		_plan._enqueue_task (_task)
 		self._update_statistics (_statistics_stack, True)
@@ -288,11 +289,12 @@ class Executor (object) :
 
 class ExecutionTask (object) :
 	
-	def __init__ (self, _handle, _identifier, _test, _transaction, _enforcer_handle, _statistics_stack, _debug) :
+	def __init__ (self, _handle, _identifier, _test, _transaction, _builder_handle, _enforcer_handle, _statistics_stack, _debug) :
 		self._handle = _handle
 		self._identifier = _identifier
 		self._test = _test
 		self._transaction = _transaction
+		self._builder_handle = _builder_handle
 		self._enforcer_handle = _enforcer_handle
 		self._statistics_stack = _statistics_stack
 		self._debug = _debug
@@ -454,7 +456,8 @@ class ExecutionPlan (object) :
 					_tracer_meta (0x2264995e, "outcome: failed;")
 				_tracer_meta (0x2d836357, "identifier: `%s`;", _task._identifier)
 				_tracer_meta (0xdb41b7d9, "handle: `%s`;", _task._handle)
-				_tracer_meta (0xf802fd92, "enforcer: `%s`;", _task._enforcer_handle)
+				_tracer_meta (0xf802fd92, "request builder: `%s`;", _task._builder_handle)
+				_tracer_meta (0xf802fd92, "response enforcer: `%s`;", _task._enforcer_handle)
 				_tracer_meta.indent (-1)
 				_task._transaction._trace (_tracer_meta, True)
 				if not _succeeded :
