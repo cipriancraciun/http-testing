@@ -366,3 +366,8 @@ _dumper_logger.propagate = False
 
 dump = dumper (None)
 
+
+
+
+transcript.dump = dump
+

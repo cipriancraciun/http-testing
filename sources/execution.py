@@ -371,7 +371,7 @@ class ExecutionPlan (object) :
 				if _statistics.succeeded :
 					_transcript.info (0x9742017c, "`%s`:  %d executed;  %d skipped;  all succeeded;", _identifier, _statistics.count_executed, _statistics.count_skipped)
 				else :
-					_transcript.info (0x6c5fcc49, "`%s`:  %d executed;  %d (%.0f%%) failed;  %d skipped;", _identifier, _statistics.count_executed, _statistics.count_failed, _statistics.ratio_failed * 100, _statistics.count_skipped)
+					_transcript.warning (0x6c5fcc49, "`%s`:  %d executed;  %d (%.0f%%) failed;  %d skipped;", _identifier, _statistics.count_executed, _statistics.count_failed, _statistics.ratio_failed * 100, _statistics.count_skipped)
 				_transcript = _transcript.fork ()
 			
 			for _identifier, _statistics in sorted (_statistics._aggregated.iteritems ()) :
