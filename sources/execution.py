@@ -385,18 +385,26 @@ class ExecutionPlan (object) :
 	
 	def _trace (self, _tracer, _failed_only) :
 		
-		if len (self._tasks) > 0 :
+		
+		if self._statistics.count_total > 0 :
 			
 			_tracer_meta = _tracer.fork (False)
 			_tracer_meta.cut ()
 			_tracer_meta (0x00de4d05, "## statistics:")
 			_tracer_meta.indent ()
+			
+			_tracer_meta (0x9b7f0986, "total: %d;", self._statistics.count_total)
+			_tracer_meta (0xa4a54eb0, "skipped: %d;", self._statistics.count_skipped)
+			_tracer_meta (0x6f36a6b9, "planned: %d;", self._statistics.count_planned)
+			
 			_tracer_meta (0x5cfb4baa, "executed total: %d;", self._statistics.count_executed)
 			_tracer_meta (0x5c414e7e, "executed succeeded: %d (%.0f%%);", self._statistics.count_succeeded, self._statistics.ratio_succeeded * 100)
 			_tracer_meta (0x3fc6ecdc, "executed failed: %d (%.0f%%);", self._statistics.count_failed, self._statistics.ratio_failed * 100)
-			_tracer_meta (0x5cfb4baa, "skipped: %d;", self._statistics.count_skipped)
-			_tracer_meta.cut ()
 			
+			_tracer_meta.cut ()
+		
+		
+		if self._statistics.count_total > 0 :
 			
 			_tracer_meta = _tracer.fork (False)
 			_tracer_meta.cut ()
@@ -419,6 +427,13 @@ class ExecutionPlan (object) :
 			_report_statistics (self._statistics, _tracer_meta.fork (), True)
 			_tracer_meta.cut ()
 			
+		else :
+			_tracer_meta.cut ()
+			_tracer (0x19025fdc, "## tests: none;")
+			_tracer_meta.cut ()
+		
+		
+		if self._statistics.count_planned > 0 :
 			
 			for _task in self._tasks :
 				_succeeded = _task._transaction.succeeded
@@ -447,7 +462,9 @@ class ExecutionPlan (object) :
 				_tracer.cut ()
 			
 		else :
+			_tracer.cut ()
 			_tracer (0x1cd6ab66, "## transactions: none;")
+			_tracer.cut ()
 	
 	
 	def dump (self, _stream = None, _failed_only = False) :
