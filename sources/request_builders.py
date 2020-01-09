@@ -69,22 +69,19 @@ class RequestBuilder (object) :
 	
 	def with_path (self, _path) :
 		_builder = self._fork_perhaps ()
-		if _builder._path is not None :
-			_path = [_builder._path, _path]
-		_builder._path = _path
+		if _builder._path is None :
+			_builder._path = list ()
+		_builder._path.append (_path)
 		return _builder
 	
 	def with_query (self, *_query_list, **_query_dict) :
 		_builder = self._fork_perhaps ()
+		if _builder._query is None :
+			_builder._query = list ()
 		if len (_query_list) > 0 :
-			_query_list = list (_query_list)
-		else :
-			_query_list = None
-		if _builder._query is not None :
-			_query = [_builder._query, _query_list, _query_dict]
-		else :
-			_query = [_query_list, _query_dict]
-		_builder._query = _query
+			_builder._query.extend (_query_list)
+		if len (_query_dict) > 0 :
+			_builder._query.append (_query_dict)
 		return _builder
 	
 	def with_path_and_query (self, _path_and_query) :
@@ -99,13 +96,13 @@ class RequestBuilder (object) :
 			return self.with_path (_path_and_query)
 	
 	def with_header (self, _name, _value) :
-		return self.with_headers ({_name : _value})
+		return self.with_headers ((_name, _value))
 	
 	def with_headers (self, _headers) :
 		_builder = self._fork_perhaps ()
-		if _builder._headers is not None :
-			_headers = [_builder._headers, _headers]
-		_builder._headers = _headers
+		if _builder._headers is None :
+			_builder._headers = list ()
+		_builder._headers.append (_headers)
 		return _builder
 	
 	
