@@ -383,7 +383,7 @@ class ExecutionPlan (object) :
 		self._transcript.cut ()
 	
 	
-	def _trace (self, _tracer) :
+	def _trace (self, _tracer, _failed_only) :
 		
 		if len (self._tasks) > 0 :
 			
@@ -425,6 +425,9 @@ class ExecutionPlan (object) :
 				_tracer.cut ()
 				if not _succeeded :
 					_tracer (0xb86f3e97, "!!!! FAILED !!!!")
+				else :
+					if _failed_only :
+						continue
 				_tracer_meta = _tracer.fork (False)
 				_tracer_meta (0xc0a5f644, "## transaction:")
 				_tracer_meta.indent ()
@@ -447,9 +450,9 @@ class ExecutionPlan (object) :
 			_tracer (0x1cd6ab66, "## transactions: none;")
 	
 	
-	def dump (self, _stream = None) :
+	def dump (self, _stream = None, _failed_only = False) :
 		_tracer = dumper (_stream)
-		self._trace (_tracer)
+		self._trace (_tracer, _failed_only)
 
 
 
