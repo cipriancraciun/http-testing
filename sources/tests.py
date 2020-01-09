@@ -144,16 +144,16 @@ class Chainer (object) :
 		_chainer = self
 		_callbacks = object.__getattribute__ (_chainer, "_callbacks")
 		
-		if _callbacks is None or _name == "new" :
+		if _callbacks is None or _name == "new" or _name == "fork" :
 			if _callbacks is not None :
-				_callbacks = list (_callbacks)
+				_callbacks = [_callbacks]
 			else :
-				_callbacks = list ()
+				_callbacks = []
 			_chainer = Chainer (_callbacks)
 		
 		def _callback (*_arguments_list, **_arguments_dict) :
 			
-			if _name == "new" :
+			if _name == "new" or _name == "fork" :
 				
 				if len (_arguments_list) > 0 :
 					raise Exception (0x0cfe9b27)
@@ -175,10 +175,25 @@ def _chainer_apply (_chainer, _self) :
 	
 	_callbacks = object.__getattribute__ (_chainer, "_callbacks")
 	
-	if _callbacks is not None :
-		for _name, _arguments_list, _arguments_dict in _callbacks :
-			_callback = getattr (_self, _name)
-			_self = _callback (*_arguments_list, **_arguments_dict)
+	return _callbacks_apply (_callbacks, _self)
+
+
+def _callbacks_apply (_callbacks, _self) :
+	
+	if _callbacks is None :
+		pass
+		
+	elif isinstance (_callbacks, tuple) :
+		_name, _arguments_list, _arguments_dict = _callbacks
+		_callback = getattr (_self, _name)
+		_self = _callback (*_arguments_list, **_arguments_dict)
+		
+	elif isinstance (_callbacks, list) :
+		for _callbacks in _callbacks :
+			_self = _callbacks_apply (_callbacks, _self)
+		
+	else :
+		raise Exception (0x75b9a6e7)
 	
 	return _self
 
