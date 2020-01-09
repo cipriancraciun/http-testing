@@ -74,12 +74,29 @@ class RequestBuilder (object) :
 		_builder._path = _path
 		return _builder
 	
-	def with_query (self, **_query) :
+	def with_query (self, *_query_list, **_query_dict) :
 		_builder = self._fork_perhaps ()
+		if len (_query_list) > 0 :
+			_query_list = list (_query_list)
+		else :
+			_query_list = None
 		if _builder._query is not None :
-			_query = [_builder._query, _query]
+			_query = [_builder._query, _query_list, _query_dict]
+		else :
+			_query = [_query_list, _query_dict]
 		_builder._query = _query
 		return _builder
+	
+	def with_path_and_query (self, _path_and_query) :
+		if not isinstance (_path_and_query, basestring) :
+			raise Exception (0x74099c42)
+		if "?" in _path_and_query :
+			_path, _query = _path_and_query.split ("?", 1)
+			_query = [_query for _query in _query.split ("&") if _query != ""]
+			_query = [(tuple (_query.split ("=", 1)) if "=" in _query else _query) for _query in _query]
+			return self.with_path (_path) .with_query (_query)
+		else :
+			return self.with_path (_path_and_query)
 	
 	def with_header (self, _name, _value) :
 		return self.with_headers ({_name : _value})

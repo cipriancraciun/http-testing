@@ -169,6 +169,9 @@ def flatten_multi_map_0 (_accumulator, _value, _key_normalizer, _key_enforcer, _
 	elif isinstance (_value, dict) :
 		for _key, _value in _value.iteritems () :
 			flatten_multi_map_0_pair (_accumulator, _key, _value, _key_normalizer, _key_enforcer, _value_normalizer, _value_enforcer)
+	
+	else :
+		raise Exception (0xc540f5c1)
 
 
 def flatten_multi_map_0_pair (_accumulator, _key, _value, _key_normalizer, _key_enforcer, _value_normalizer, _value_enforcer) :
