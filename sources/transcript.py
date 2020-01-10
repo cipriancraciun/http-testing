@@ -351,7 +351,7 @@ def dumper (_stream) :
 	if isinstance (_stream, Dumper) :
 		return TracerFunc (_stream, _stream._push, logging.DUMP, None)
 	elif isinstance (_stream, TracerFunc) :
-		return _dumper
+		return _stream
 	else :
 		return dumper (Dumper (_stream))
 
@@ -370,4 +370,5 @@ dump = dumper (None)
 
 
 transcript.dump = dump
+transcript.dumper = dumper
 
