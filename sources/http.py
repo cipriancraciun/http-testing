@@ -28,6 +28,7 @@ class Request (object) :
 		self.body = _body
 		self._normalize ()
 		self._set_endpoint (_endpoint)
+		self._set_url ()
 		self._set_fingerprint ()
 	
 	
@@ -110,13 +111,47 @@ class Request (object) :
 				self.server_endpoint = None
 		else :
 			self.server_endpoint = None
-			self.server_tls = False
+			self.server_tls = None
 		
 		if self.server_endpoint is None and self.host is not None :
 			self.server_endpoint = self.host
 		
 		if self.server_endpoint is None :
 			raise Exception (0x0ffef94e)
+	
+	
+	def _set_url (self) :
+		
+		_parts = []
+		
+		if self.host is not None or self.server_endpoint is not None :
+			
+			if self.server_tls is True :
+				_parts.append ("https://")
+			elif self.server_tls is False :
+				_parts.append ("http://")
+			elif self.server_tls is None :
+				_parts.append ("//")
+			else :
+				raise Exception (0x4440ebb2)
+		
+		if self.host is not None :
+			_parts.append (self.host)
+			
+		elif self.server_endpoint is not None :
+			_parts.append (self.server_endpoint)
+		
+		if self.path is not None :
+			_parts.append (self.path)
+		else :
+			raise Exception (0x761a7c95)
+		
+		if self.query is not None :
+			_parts.append ("?")
+			_parts.append (self.query)
+		
+		self.url = "".join (_parts)
+		self.url_fingerprint = hash_md5 (self.url)
 	
 	
 	def _set_fingerprint (self) :
@@ -134,6 +169,9 @@ class Request (object) :
 	
 	
 	def _trace (self, _tracer) :
+		
+		_tracer (0x2a907274, "url: `%s`;", self.url)
+		_tracer (0x2a907274, "url fingerprint: `%s`;", self.url_fingerprint)
 		
 		if self.host is not None :
 			_tracer (0x7fc84f53, "host: `%s`;", self.host)
