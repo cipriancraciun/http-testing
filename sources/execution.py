@@ -430,9 +430,9 @@ class ExecutionPlan (object) :
 			_tracer_meta.cut ()
 			
 		else :
-			_tracer_meta.cut ()
+			_tracer.cut ()
 			_tracer (0x19025fdc, "## tests: none;")
-			_tracer_meta.cut ()
+			_tracer.cut ()
 		
 		
 		if self._statistics.count_planned > 0 :

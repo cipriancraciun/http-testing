@@ -171,7 +171,7 @@ class Request (object) :
 	def _trace (self, _tracer) :
 		
 		_tracer (0x2a907274, "url: `%s`;", self.url)
-		_tracer (0x2a907274, "url fingerprint: `%s`;", self.url_fingerprint)
+		_tracer (0x491ef60a, "url fingerprint: `%s`;", self.url_fingerprint)
 		
 		if self.host is not None :
 			_tracer (0x7fc84f53, "host: `%s`;", self.host)
