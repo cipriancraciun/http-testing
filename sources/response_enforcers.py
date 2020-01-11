@@ -22,6 +22,7 @@ class ResponseEnforcer (object) :
 	def __init__ (self, _context, _parent) :
 		self._context = _context
 		self._parent = _parent
+		self._allowed_headers = None
 		self._enforcers = list ()
 		self._extends = list ()
 		self._sanitizers = list ()
@@ -42,6 +43,53 @@ class ResponseEnforcer (object) :
 			return self.fork ()
 		else :
 			return self
+	
+	
+	
+	
+	def allow_header (self, _name) :
+		return self.allow_headers (_name)
+	
+	def allow_headers (self, _headers) :
+		_enforcer = self._fork_perhaps ()
+		if _enforcer._allowed_headers is None :
+			_enforcer._allowed_headers = set ()
+		_enforcer_headers = _enforcer._allowed_headers
+		def _allow (_headers) :
+			if isinstance (_headers, basestring) :
+				_enforcer_headers.add (_headers.lower ())
+			elif isinstance (_headers, list) or isinstance (_headers, tuple) or isinstance (_headers, set) :
+				for _headers in _headers :
+					_allow (_headers)
+			else :
+				raise Exception (0xd66f16f5)
+		_allow (_headers)
+		_enforcer._fingerprint = None
+		return _enforcer
+	
+	def _enforce_allowed_headers (self, _transaction) :
+		_headers = set (_transaction.response.headers_0.iterkeys ())
+		_should_enforce = self._enforce_allowed_headers_0 (_headers)
+		if _should_enforce :
+			if len (_headers) > 0 :
+				for _header in sorted (_headers) :
+					_transaction.annotations.warning (0x83b54dfe, "header `%s`:  not expected!", _header)
+				return False
+			else :
+				return True
+		else :
+			return True
+	
+	def _enforce_allowed_headers_0 (self, _remaining_headers) :
+		_should_enforce = False
+		if self._parent is not None :
+			_should_enforce |= self._parent._enforce_allowed_headers_0 (_remaining_headers)
+		if self._allowed_headers is not None :
+			_remaining_headers.difference_update (self._allowed_headers)
+			_should_enforce |= True
+		for _extender in self._extends :
+			_should_enforce |= _extender._enforce_allowed_headers_0 (_remaining_headers)
+		return _should_enforce
 	
 	
 	
@@ -208,11 +256,14 @@ class ResponseEnforcer (object) :
 	
 	
 	def enforce (self, _transaction) :
+		return self._enforce_0 (_transaction, True)
+	
+	def _enforce_0 (self, _transaction, _top_level) :
 		
 		_failed = False
 		
 		if self._parent is not None :
-			_outcome = self._parent.enforce (_transaction)
+			_outcome = self._parent._enforce_0 (_transaction, False)
 			if _outcome is not None and _outcome is not True :
 				# return _outcome
 				_failed = True
@@ -224,7 +275,13 @@ class ResponseEnforcer (object) :
 				_failed = True
 		
 		for _extender in self._extends :
-			_outcome = _extender.enforce (_transaction)
+			_outcome = _extender._enforce_0 (_transaction, False)
+			if _outcome is not None and _outcome is not True :
+				# return _outcome
+				_failed = True
+		
+		if _top_level :
+			_outcome = self._enforce_allowed_headers (_transaction)
 			if _outcome is not None and _outcome is not True :
 				# return _outcome
 				_failed = True
@@ -265,6 +322,9 @@ class ResponseEnforcer (object) :
 			_fingerprint.append (self._parent.fingerprint ())
 		else :
 			_fingerprint.append (None)
+		
+		_fingerprint.append ("51a0be3ef12d33c07eaa85cb1284a397")
+		_fingerprint.append (self._allowed_headers)
 		
 		_fingerprint.append ("d5cc4339aaf0d7967bc5e3a8ed946dea")
 		for _callback, _arguments_list, _arguments_dict in self._enforcers :
