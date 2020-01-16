@@ -1,5 +1,9 @@
 
 
+import signal
+from time import sleep
+
+
 
 
 def enforce_identifier (_identifier) :
@@ -246,4 +250,46 @@ def multi_map_to_dict_0 (_accumulator, _map, _key_normalizer, _key_enforcer, _va
 				_values = [_values]
 				_accumulator[_key] = _values
 			_values.append (_value)
+
+
+
+
+class Interrupt (object) :
+	
+	
+	def __init__ (self) :
+		self.interrupted = False
+		self._depth = 0
+	
+	
+	def _register (self) :
+		self._previous_handlers = dict ()
+		for _signal in [signal.SIGINT, signal.SIGTERM, signal.SIGHUP] :
+			self._previous_handlers[_signal] = signal.signal (_signal, self._trigger)
+	
+	def _unregister (self) :
+		for _signal, _previous_handler in self._previous_handlers.iteritems () :
+			signal.signal (_signal, _previous_handler)
+		self._previous_handlers = None
+	
+	
+	def _trigger (self, _signal, _stack) :
+		self.interrupted = True
+	
+	
+	def __enter__ (self) :
+		if self._depth == 0 :
+			self._register ()
+			self.interrupted = False
+		self._depth += 1
+		return self
+	
+	
+	def __exit__ (self, _exception_type, _exception_value, _exception_traceback) :
+		self._depth -= 1
+		if self._depth == 0 :
+			self._unregister ()
+		elif self._depth < 0 :
+			raise Exception (0x858c4997)
+		return False
 

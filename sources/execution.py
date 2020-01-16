@@ -5,6 +5,7 @@ import threading
 
 from .crypto import *
 from .http import *
+from .tools import *
 from .transcript import *
 
 import tests # recursive-import
@@ -27,38 +28,50 @@ class Executor (object) :
 		self._debug = _debug
 		
 		self._transcript = transcript (self, 0x332ac851)
+		self._interrupt = Interrupt ()
 	
 	
 	def execute (self, _test) :
 		
 		_plan = ExecutionPlan (self._context, self._transport, self._hooks, self._parallelism, self._debug)
 		
-		self._transcript.cut ()
-		self._transcript.notice (0x8d8c3f01, "planning...")
-		
-		self._plan (_plan, _test, None, None, _plan._debug, False)
-		
-		_plan._tasks = list ()
-		for _identifier, _task in sorted (_plan._tasks_by_identifier.iteritems ()) :
-			_plan._tasks.append (_task)
-		
-		self._transcript.debug (0xa4b3290e, "planned;")
-		self._transcript.cut ()
-		
-		self._transcript.cut ()
-		self._transcript.debug (0x91657e21, "executing...")
-		
-		self._execute_plan (_plan)
-		
-		self._transcript.debug (0x310eac5e, "executed;")
-		self._transcript.cut ()
-		
-		_plan._report_execution ()
+		with self._interrupt :
+			
+			self._transcript.cut ()
+			self._transcript.notice (0x8d8c3f01, "planning...")
+			
+			self._plan (_plan, _test, None, None, _plan._debug, False)
+			if self._interrupt.interrupted :
+				self._transcript.warning (0xea308f40, "aborting!")
+				return _plan
+			
+			_plan._tasks = list ()
+			for _identifier, _task in sorted (_plan._tasks_by_identifier.iteritems ()) :
+				_plan._tasks.append (_task)
+			
+			self._transcript.debug (0xa4b3290e, "planned;")
+			self._transcript.cut ()
+			
+			self._transcript.cut ()
+			self._transcript.debug (0x91657e21, "executing...")
+			
+			self._execute_plan (_plan)
+			if self._interrupt.interrupted :
+				self._transcript.warning (0xea308f40, "aborting!")
+				_plan._report_execution ()
+				return _plan
+			
+			self._transcript.debug (0x310eac5e, "executed;")
+			self._transcript.cut ()
+			
+			_plan._report_execution ()
 		
 		return _plan
 	
 	
 	def _plan (self, _plan, _test, _identifier_stack, _statistics_stack, _debug, _skip) :
+		if self._interrupt.interrupted :
+			return
 		if isinstance (_test, tests.Test) :
 			self._plan_test (_plan, _test, _identifier_stack, _statistics_stack, _debug, _skip)
 		elif isinstance (_test, tests.Tests) :
@@ -143,6 +156,9 @@ class Executor (object) :
 		
 		for _task in _plan._tasks :
 			
+			if self._interrupt.interrupted :
+				break
+			
 			self._execute_task_before (_task._handle, _task._identifier, _task._transaction, _plan, _task._test, _task._debug)
 			self._execute_task_actual (_task._handle, _task._identifier, _task._transaction, _plan, _task._test, _task._debug)
 			self._execute_task_after (_task._handle, _task._identifier, _task._transaction, _plan, _task._test, _task._debug)
@@ -174,17 +190,18 @@ class Executor (object) :
 			_thread.start ()
 		
 		_tasks_queue = list (_plan._tasks)
-		_tasks_expected = len (_tasks_queue)
+		_tasks_expected = 0
 		
 		while True :
 			
-			if _tasks_expected == 0 :
-				break
-			
-			while len (_tasks_queue) > 0 and not _pending_queue.full () :
+			while len (_tasks_queue) > 0 and not _pending_queue.full () and not self._interrupt.interrupted :
 				_task = _tasks_queue.pop ()
 				self._execute_task_before (_task._handle, _task._identifier, _task._transaction, _plan, _task._test, _task._debug)
 				_pending_queue.put (_task)
+				_tasks_expected += 1
+			
+			if _tasks_expected == 0 :
+				break
 			
 			while True :
 				_task = _executed_queue.get ()
@@ -280,7 +297,7 @@ class Executor (object) :
 				_statistics_stack[1]._update_planned ()
 			elif _transaction is False :
 				_statistics_stack[1]._update_skipped ()
-			else :
+			elif _transaction.completed :
 				_statistics_stack[1]._update_executed (_transaction)
 			
 			_statistics_stack = _statistics_stack[0]
@@ -360,7 +377,7 @@ class ExecutionPlan (object) :
 		self._transcript.cut ()
 		
 		if self._statistics.count_executed > 0 :
-			if self._statistics.succeeded :
+			if self._statistics.succeeded and self._statistics.count_executed == self._statistics.count_planned :
 				self._transcript.notice (0xd23fd5de, "execution outcome:  %d executed;  %d skipped;  all succeeded;", self._statistics.count_executed, self._statistics.count_skipped)
 			else :
 				self._transcript.warning (0xe8e97c33, "execution outcome:  %d executed;  %d (%.0f%%) failed;  %d skipped;", self._statistics.count_executed, self._statistics.count_failed, self._statistics.ratio_failed * 100, self._statistics.count_skipped)
@@ -371,7 +388,7 @@ class ExecutionPlan (object) :
 			
 			if not _only_aggregated :
 				_identifier = stringify_identifier (_statistics._identifier)
-				if _statistics.succeeded :
+				if _statistics.succeeded and _statistics.count_executed == _statistics.count_planned :
 					_transcript.info (0x9742017c, "`%s`:  %d executed;  %d skipped;  all succeeded;", _identifier, _statistics.count_executed, _statistics.count_skipped)
 				else :
 					_transcript.warning (0x6c5fcc49, "`%s`:  %d executed;  %d (%.0f%%) failed;  %d skipped;", _identifier, _statistics.count_executed, _statistics.count_failed, _statistics.ratio_failed * 100, _statistics.count_skipped)
@@ -417,7 +434,7 @@ class ExecutionPlan (object) :
 				
 				if not _only_aggregated :
 					_identifier = stringify_identifier (_statistics._identifier)
-					if _statistics.succeeded :
+					if _statistics.succeeded and _statistics.count_executed == _statistics.count_planned :
 						_tracer (0xcbac6bd3, "`%s`:  %d executed;  %d skipped;  all succeeded;", _identifier, _statistics.count_executed, _statistics.count_skipped)
 					else :
 						_tracer (0xa1fc227b, "`%s`:  %d executed;  %d (%.0f%%) failed;  %d skipped;", _identifier, _statistics.count_executed, _statistics.count_failed, _statistics.ratio_failed * 100, _statistics.count_skipped)
@@ -439,6 +456,8 @@ class ExecutionPlan (object) :
 		if self._statistics.count_planned > 0 :
 			
 			for _task in self._tasks :
+				if not _task._transaction.completed :
+					continue
 				_succeeded = _task._transaction.succeeded
 				_tracer.cut ()
 				if not _succeeded :

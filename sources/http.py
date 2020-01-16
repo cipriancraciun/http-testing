@@ -313,6 +313,10 @@ class Transaction (object) :
 		self._response_enforcer = _response_enforcer
 		self._status = "created"
 		
+		self.completed = False
+		self.succeeded = None
+		self.failed = None
+		
 		self._transcript = transcript (self, 0x39d1e066)
 	
 	
@@ -386,6 +390,8 @@ class Transaction (object) :
 		
 		self._status = "sanitized"
 		self._transcript.internal (0xa4739ad4, "sanitized;")
+		
+		self.completed = True
 	
 	
 	def execute (self) :
@@ -513,6 +519,16 @@ class Transaction (object) :
 	
 	
 	def _trace (self, _tracer, _annotations = True) :
+		
+		if self.completed :
+			_tracer (0x0691f606, "* completed: true;")
+		else :
+			_tracer (0xc7b258db, "* completed: false;")
+		
+		if self.succeeded is True :
+			_tracer (0x716de2cb, "* succeeded: true;")
+		if self.failed is True :
+			_tracer (0x77515003, "* failed: true;")
 		
 		if _annotations :
 			if len (self.annotations._records) > 0 :
