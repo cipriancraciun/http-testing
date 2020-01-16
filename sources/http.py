@@ -337,6 +337,12 @@ class Transaction (object) :
 	
 	
 	def enforce (self) :
+		
+		if self._status == "failed" :
+			self.succeeded = False
+			self.failed = True
+			return self.succeeded
+		
 		self._transcript.internal (0xd787ec43, "enforcing...")
 		if self._status != "executed" :
 			raise Exception (0x30fdb113)
@@ -364,6 +370,8 @@ class Transaction (object) :
 	
 	
 	def sanitize (self) :
+		if self._status == "failed" :
+			return
 		self._transcript.internal (0xd787ec43, "sanitizing...")
 		if self._status != "enforced" :
 			raise Exception (0x5af3ef21)
@@ -385,9 +393,31 @@ class Transaction (object) :
 		if self._status != "prepared" :
 			raise Exception (0x293086ba)
 		self._status = "executing"
-		_connection = self._execute_connect ()
-		self._execute_request (_connection)
-		self._execute_response (_connection)
+		
+		try :
+			_connection = self._execute_connect ()
+		except Exception as _error :
+			self._transcript.error (0x22112f80, "failed executing due to unexpected error while connecting: `%s`", _error)
+			self.annotations.warning (0xb35ce2d3, "I/O error encountered while connecting!")
+			self._status = "failed"
+			return
+		
+		try :
+			self._execute_request (_connection)
+		except Exception as _error :
+			self._transcript.error (0x5c9ae023, "failed executing due to unexpected error while sending request: `%s`", _error)
+			self.annotations.warning (0xcce519bb, "I/O error encountered while sending request!")
+			self._status = "failed"
+			return
+		
+		try :
+			self._execute_response (_connection)
+		except Exception as _error :
+			self._transcript.error (0xc22b728a, "failed executing due to unexpected error while receiving response: `%s`", _error)
+			self.annotations.warning (0x161d8ef6, "I/O error encountered while receiving response!")
+			self._status = "failed"
+			return
+		
 		self.transport.release (_connection)
 		self._status = "executed"
 		self._transcript.internal (0x21a65363, "executed;")
