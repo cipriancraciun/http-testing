@@ -57,7 +57,7 @@ if len (logging.root.handlers) == 0 :
 
 
 
-from counters import *
+from .counters import *
 
 
 

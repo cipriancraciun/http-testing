@@ -1,8 +1,9 @@
 
 
-from crypto import *
+from .crypto import *
+from .transcript import *
+
 import http # recursive-import
-from transcript import *
 
 
 

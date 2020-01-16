@@ -3,10 +3,11 @@
 import Queue as queue
 import threading
 
-from crypto import *
-from http import *
+from .crypto import *
+from .http import *
+from .transcript import *
+
 import tests # recursive-import
-from transcript import *
 
 
 

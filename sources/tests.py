@@ -1,12 +1,13 @@
 
 
-from context import *
-from execution import *
-from request_builders import *
-from response_enforcers import *
-from transcript import *
+from .context import *
+from .execution import *
+from .request_builders import *
+from .response_enforcers import *
+from .transcript import *
 
-import request_builders, response_enforcers
+from .request_builders import requests as requests_new
+from .response_enforcers import responses as responses_new
 
 
 
@@ -17,10 +18,10 @@ def tests (identifier = None, requests = None, responses = None, debug = None, s
 		_context = Context ()
 	
 	if isinstance (requests, Chainer) :
-		requests = _chainer_apply (requests, request_builders.requests (_context))
+		requests = _chainer_apply (requests, requests_new (_context))
 	
 	if isinstance (responses, Chainer) :
-		responses = _chainer_apply (responses, response_enforcers.responses (_context))
+		responses = _chainer_apply (responses, responses_new (_context))
 	
 	_tests = Tests (_context, identifier, requests, responses, debug, skip)
 	return _tests

@@ -7,11 +7,11 @@ import threading
 import time
 
 
-from crypto import *
-from request_builders import *
-from response_enforcers import *
-from tools import *
-from transcript import *
+from .crypto import *
+from .request_builders import *
+from .response_enforcers import *
+from .tools import *
+from .transcript import *
 
 
 

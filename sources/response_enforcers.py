@@ -2,8 +2,8 @@
 
 import types
 
-from crypto import *
-from transcript import *
+from .crypto import *
+from .transcript import *
 
 
 
